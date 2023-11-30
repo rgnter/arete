@@ -1,0 +1,10 @@
+# Binaries
+cmake-build-*/
+out/
+build/
+
+# IDE Settings
+.idea/
+*.iml
+.json
+.editorconfig
