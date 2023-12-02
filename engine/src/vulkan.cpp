@@ -317,21 +317,80 @@ struct Mesh
     glm::vec3 pos;
   };
 
-  const std::array<Vertex, 4> verticies = {
+  const std::array<Vertex, 24> verticies = {
       Vertex
 
       // FRONT
-      {{-1.0f, -1.0f, +1.0f}},
-      {{+1.0f, -1.0f, +1.0f}},
-      {{-1.0f, +1.0f, +1.0f}},
-      {{+1.0f, +1.0f, +1.0f}},
+      {{-0.5f, -0.5f, +0.5f}},
+      {{+0.5f, -0.5f, +0.5f}},
+      {{-0.5f, +0.5f, +0.5f}},
+      {{+0.5f, +0.5f, +0.5f}},
+
+      // BACK
+      {{-0.5f, -0.5f, -0.5f}},
+      {{+0.5f, -0.5f, -0.5f}},
+      {{-0.5f, +0.5f, -0.5f}},
+      {{+0.5f, +0.5f, -0.5f}},
+
+
+      // RIGHT
+      {{+0.5f, -0.5f, -0.5f}},
+      {{+0.5f, -0.5f, +0.5f}},
+      {{+0.5f, +0.5f, -0.5f}},
+      {{+0.5f, +0.5f, +0.5f}},
+
+      // LEFT
+      {{-0.5f, -0.5f, -0.5f}},
+      {{-0.5f, -0.5f, +0.5f}},
+      {{-0.5f, +0.5f, -0.5f}},
+      {{-0.5f, +0.5f, +0.5f}},
+
+
+      // TOP
+      {{-0.5f, +0.5f, -0.5f}},
+      {{+0.5f, +0.5f, -0.5f}},
+      {{-0.5f, +0.5f, +0.5f}},
+      {{+0.5f, +0.5f, +0.5f}},
+
+      // BOTTOM
+      {{-0.5f, -0.5f, -0.5f}},
+      {{+0.5f, -0.5f, -0.5f}},
+      {{-0.5f, -0.5f, +0.5f}},
+      {{+0.5f, -0.5f, +0.5f}},
   };
 
-  const std::array<short, 6> indices = {
+  const std::array<short, 36> indices = {
       // FRONT bottom-left
-      0, 1, 2,
+      2, 1, 0,
       // FRONT upper-right
-      3, 2, 1
+      1, 2, 3,
+
+      // BACK
+      6, 4, 5,
+      // BACK
+      5, 7, 6,
+
+
+      // RIGHT
+      10, 8, 9,
+      // RIGHT
+      9, 11, 10,
+
+      // LEFT
+      14, 13, 12,
+      // LEFT
+      13, 14, 15,
+
+
+      // TOP
+      18, 16, 17,
+      // TOP
+      17, 19, 18,
+
+      // BOTTOM
+      22, 21, 20,
+      // BOTTOM
+      21, 22, 23
   };
 
 } cube;
@@ -904,11 +963,12 @@ void InFlightRendering::render()
       static_cast<float>(_renderer._surfaceCapabilities.currentExtent.width),
       static_cast<float>(_renderer._surfaceCapabilities.currentExtent.height),
       0.0f,
-      1.0f)
+      1.0f
+    )
   );
 
   commandBuffer.drawIndexed(
-    6, 1, 0, 0, 0
+    36, 1, 0, 0, 0
   );
 
   commandBuffer.endRenderPass();
