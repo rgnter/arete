@@ -31,7 +31,6 @@ namespace arete
       , _source(std::move(source))
     {}
 
-  public:
     //! @returns Stage to which this shader is bound.
     const Stage& stage() const
     {
@@ -68,11 +67,13 @@ namespace arete
         , _fragmentShader(fragmentShader)
     {}
 
+    //! @returns Vertex shader handle.
     ShaderHandle vertexShader() const
     {
       return _vertexShader;
     }
 
+    //! @returns Fragment shader handle.
     ShaderHandle fragmentShader() const
     {
       return _fragmentShader;
