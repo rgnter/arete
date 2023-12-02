@@ -351,19 +351,11 @@ struct Mesh
 
 } cube;
 
-void VulkanRenderer::vertexBuffer()
+//!
+uint32_t vulkan_find_memory_type(const vk::PhysicalDeviceMemoryProperties& memoryProperties,
+                                 const vk::MemoryRequirements& memoryRequirements)
 {
-  _vertexBuffer = vkr::Buffer(
-    _device,
-    vk::BufferCreateInfo {
-      .size = cube.verticies.size() * sizeof(Mesh::Vertex),
-      .usage = vk::BufferUsageFlagBits::eVertexBuffer,
-      .sharingMode = vk::SharingMode::eExclusive,});
-
-  const auto memoryProperties = _physicalDevice.getMemoryProperties();
-  const auto memoryRequirements = _vertexBuffer.getMemoryRequirements();
-  uint32_t memoryTypeIndex = 0;
-
+  int memoryTypeIndex = 0;
   // Find the right memory for the uniform buffer.
   for (; memoryTypeIndex < memoryProperties.memoryTypeCount; ++memoryTypeIndex)
   {
@@ -371,14 +363,30 @@ void VulkanRenderer::vertexBuffer()
     if (memoryRequirements.memoryTypeBits & memoryTypeBit)
     {
       const auto memoryType = memoryProperties.memoryTypes[memoryTypeIndex];
-      if (memoryType.propertyFlags & (vk::MemoryPropertyFlagBits::eHostVisible
-                                      | vk::MemoryPropertyFlagBits::eHostCoherent))
+      if (memoryType.propertyFlags & (vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent))
       {
         // we found the right memory, yippie!!
-        break;
+        return memoryTypeIndex;
       }
     }
   }
+
+  throw std::runtime_error("Couldn't find the right memory type");
+}
+
+void VulkanRenderer::vertexBuffer()
+{
+  _vertexBuffer = vkr::Buffer(
+    _device,
+    vk::BufferCreateInfo {
+      .size = cube.verticies.size() * sizeof(Mesh::Vertex),
+      .usage = vk::BufferUsageFlagBits::eVertexBuffer,
+      .sharingMode = vk::SharingMode::eExclusive
+    });
+
+  const auto memoryProperties = _physicalDevice.getMemoryProperties();
+  const auto memoryRequirements = _vertexBuffer.getMemoryRequirements();
+  uint32_t memoryTypeIndex = vulkan_find_memory_type(memoryProperties, memoryRequirements);
 
   _vertexBufferMemory = vkr::DeviceMemory(
     _device,
@@ -392,6 +400,34 @@ void VulkanRenderer::vertexBuffer()
   std::memcpy(memory, cube.verticies.data(), cube.verticies.size() * sizeof(Mesh::Vertex));
   _vertexBufferMemory.unmapMemory();
   _vertexBuffer.bindMemory(*_vertexBufferMemory, 0);
+}
+
+void VulkanRenderer::indexBuffer()
+{
+  _indexBuffer = vkr::Buffer(
+    _device,
+    vk::BufferCreateInfo {
+      .size = cube.verticies.size() * sizeof(Mesh::Vertex),
+      .usage = vk::BufferUsageFlagBits::eIndexBuffer,
+      .sharingMode = vk::SharingMode::eExclusive,
+    });
+
+  const auto memoryProperties = _physicalDevice.getMemoryProperties();
+  const auto memoryRequirements = _vertexBuffer.getMemoryRequirements();
+  uint32_t memoryTypeIndex = vulkan_find_memory_type(memoryProperties, memoryRequirements);
+
+  _indexBufferMemory = vkr::DeviceMemory(
+    _device,
+    vk::MemoryAllocateInfo {
+      .allocationSize = memoryRequirements.size,
+      .memoryTypeIndex = memoryTypeIndex
+    });
+
+  auto memory = static_cast<uint8_t*>(
+    _indexBufferMemory.mapMemory(0, memoryRequirements.size));
+  std::memcpy(memory, cube.verticies.data(), cube.verticies.size() * sizeof(Mesh::Vertex));
+  _indexBufferMemory.unmapMemory();
+  _indexBuffer.bindMemory(*_indexBufferMemory, 0);
 }
 
 void VulkanRenderer::renderPass()
@@ -862,6 +898,11 @@ void InFlightRendering::render()
   const auto& vertexBuffer = *_renderer._vertexBuffer;
   commandBuffer.bindVertexBuffers(
     0, {vertexBuffer}, {0});
+
+  // Bind IBO
+  const auto& indexBuffer = *_renderer._indexBuffer;
+  commandBuffer.bindIndexBuffer(
+    indexBuffer, 0, vk::IndexType::eUint16);
 
   // Scissor
   commandBuffer.setScissor(
