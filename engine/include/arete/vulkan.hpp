@@ -256,6 +256,7 @@ public:
     _renderer.depthBuffer();
     _renderer.uniformBuffer();
     _renderer.vertexBuffer();
+    _renderer.indexBuffer();
 
     _renderer.renderPass();
 

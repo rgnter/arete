@@ -317,36 +317,21 @@ struct Mesh
     glm::vec3 pos;
   };
 
-  const std::array<Vertex, 6> verticies = {
+  const std::array<Vertex, 4> verticies = {
       Vertex
 
-      // FRONT bottom-left
-      {{+1.0f, -1.0f, +1.0f}},
-      {{-1.0f, -1.0f, +1.0f}},
-      {{-1.0f, +1.0f, +1.0f}},
-
-      // FRONT bottom-left
-      {{+1.0f, +1.0f, +1.0f}},
-      {{-1.0f, +1.0f, +1.0f}},
-      {{+1.0f, -1.0f, +1.0f}},
-  };
-
-  const std::array<Vertex, 12> verticies_indexed = {
-      Vertex
-
-      // FRONT bottom-left
+      // FRONT
       {{-1.0f, -1.0f, +1.0f}},
       {{+1.0f, -1.0f, +1.0f}},
+      {{-1.0f, +1.0f, +1.0f}},
       {{+1.0f, +1.0f, +1.0f}},
-
-      // FRONT bottom-left
   };
 
-  const std::array<short, 36> indices = {
+  const std::array<short, 6> indices = {
       // FRONT bottom-left
-      0, 1, 2
-      
-      // FRONT bottom-left
+      0, 1, 2,
+      // FRONT upper-right
+      3, 2, 1
   };
 
 } cube;
@@ -407,13 +392,14 @@ void VulkanRenderer::indexBuffer()
   _indexBuffer = vkr::Buffer(
     _device,
     vk::BufferCreateInfo {
-      .size = cube.verticies.size() * sizeof(Mesh::Vertex),
+      .size = cube.indices.size() * sizeof(uint16_t),
       .usage = vk::BufferUsageFlagBits::eIndexBuffer,
       .sharingMode = vk::SharingMode::eExclusive,
-    });
+    }
+  );
 
   const auto memoryProperties = _physicalDevice.getMemoryProperties();
-  const auto memoryRequirements = _vertexBuffer.getMemoryRequirements();
+  const auto memoryRequirements = _indexBuffer.getMemoryRequirements();
   uint32_t memoryTypeIndex = vulkan_find_memory_type(memoryProperties, memoryRequirements);
 
   _indexBufferMemory = vkr::DeviceMemory(
@@ -425,7 +411,7 @@ void VulkanRenderer::indexBuffer()
 
   auto memory = static_cast<uint8_t*>(
     _indexBufferMemory.mapMemory(0, memoryRequirements.size));
-  std::memcpy(memory, cube.verticies.data(), cube.verticies.size() * sizeof(Mesh::Vertex));
+  std::memcpy(memory, cube.indices.data(), cube.indices.size() * sizeof(uint16_t));
   _indexBufferMemory.unmapMemory();
   _indexBuffer.bindMemory(*_indexBufferMemory, 0);
 }
@@ -616,7 +602,7 @@ void VulkanRenderer::pipeline()
     .depthClampEnable = VK_FALSE,
     .rasterizerDiscardEnable = VK_FALSE,
     .polygonMode = vk::PolygonMode::eFill,
-    .cullMode = vk::CullModeFlagBits::eFront,
+    .cullMode = vk::CullModeFlagBits::eNone,
     .frontFace = vk::FrontFace::eClockwise,
     .lineWidth = 1.0f,};
 
@@ -897,12 +883,14 @@ void InFlightRendering::render()
   // Bind VBOs
   const auto& vertexBuffer = *_renderer._vertexBuffer;
   commandBuffer.bindVertexBuffers(
-    0, {vertexBuffer}, {0});
+    0, {vertexBuffer}, {0}
+  );
 
   // Bind IBO
   const auto& indexBuffer = *_renderer._indexBuffer;
   commandBuffer.bindIndexBuffer(
-    indexBuffer, 0, vk::IndexType::eUint16);
+    indexBuffer, 0, vk::IndexType::eUint16
+  );
 
   // Scissor
   commandBuffer.setScissor(
@@ -919,8 +907,9 @@ void InFlightRendering::render()
       1.0f)
   );
 
-  commandBuffer.draw(
-    6, 1, 0, 0);
+  commandBuffer.drawIndexed(
+    6, 1, 0, 0, 0
+  );
 
   commandBuffer.endRenderPass();
   commandBuffer.end();
