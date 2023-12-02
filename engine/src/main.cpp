@@ -7,7 +7,7 @@ int main(int argc, char** argv)
   const auto readMeshBinary = [](const std::filesystem::path& shaderBinaryPath)
   {
     std::ifstream input(shaderBinaryPath, std::ios::binary);
-    if (input.bad())
+    if (!input.is_open())
       throw std::runtime_error(
         std::format("Couldn't find mesh at '{}'", shaderBinaryPath.c_str()));
 

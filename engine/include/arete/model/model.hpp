@@ -32,13 +32,13 @@ namespace arete
     {}
 
     //! @returns Stage to which this shader is bound.
-    const Stage& stage() const
+    [[nodiscard]] const Stage& stage() const
     {
       return _stage;
     }
 
     //! @returns Source of this shader.
-    const std::vector<uint8_t>& source() const
+    [[nodiscard]] const std::vector<uint8_t>& source() const
     {
       return _source;
     }
@@ -68,13 +68,13 @@ namespace arete
     {}
 
     //! @returns Vertex shader handle.
-    ShaderHandle vertexShader() const
+    [[nodiscard]] ShaderHandle vertexShader() const
     {
       return _vertexShader;
     }
 
     //! @returns Fragment shader handle.
-    ShaderHandle fragmentShader() const
+    [[nodiscard]] ShaderHandle fragmentShader() const
     {
       return _fragmentShader;
     }
@@ -112,6 +112,24 @@ namespace arete
       , _vertices(std::move(vertices))
       , _indices(std::move(indices))
     {}
+
+    [[nodiscard]] MaterialHandle material() const
+    {
+      return _material;
+    }
+
+    //! @returns Reference to vertices.
+    [[nodiscard]] const Vertices& vertices() const
+    {
+
+      return _vertices;
+    }
+
+    //! @returns Reference to indices.
+    [[nodiscard]] const Indices& indices() const
+    {
+      return _indices;
+    }
 
   private:
     MaterialHandle _material;

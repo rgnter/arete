@@ -19,6 +19,42 @@
 #include <format>
 #include <vector>
 
+namespace arete
+{
+
+namespace vkr = vk::raii;
+
+//! Finds memory type satisfying memory requirements.
+//! @param memoryProperties Memory properties.
+//! @param memoryRequirements Memory requirements.
+//! @returns Memory type index.
+//! @throws If no appropriate memory was found.
+uint32_t vulkanFindMemoryType(const vk::PhysicalDeviceMemoryProperties& memoryProperties,
+                                 const vk::MemoryRequirements& memoryRequirements);
+
+//! Vulkan material.
+struct VulkanMaterial
+{
+  vkr::ShaderModule _fragmentShader { nullptr };
+  vkr::ShaderModule _vertexShader { nullptr };
+};
+
+//! Vulkan mesh.
+struct VulkanMesh
+{
+  vkr::Buffer _vertexBuffer { nullptr };
+  vkr::DeviceMemory _vertexBufferMemory { nullptr };
+
+  vkr::Buffer _indexBuffer { nullptr };
+  vkr::DeviceMemory _indexBufferMemory { nullptr };
+
+  void indexBuffer(const vkr::Device& device, const vkr::PhysicalDevice& physicalDevice, const Mesh& mesh);
+
+  void vertexBuffer(const vkr::Device& device, const vkr::PhysicalDevice& physicalDevice, const Mesh& mesh);
+};
+
+} // namespace arete
+
 namespace vulkan
 {
 
@@ -48,12 +84,6 @@ public:
 
   //! Setup uniform buffer.
   void uniformBuffer();
-
-  //! Setup vertex buffer.
-  void vertexBuffer();
-
-  //! Setup index buffer.
-  void indexBuffer();
 
   //! Setup pipeline.
   void pipeline();
@@ -94,12 +124,6 @@ public:
   vkr::DescriptorPool _uniformDescriptorPool { nullptr };
   vkr::DescriptorSets _uniformDescriptorSets { nullptr };
 
-  vkr::DeviceMemory _vertexBufferMemory { nullptr };
-  vkr::Buffer _vertexBuffer { nullptr };
-
-  vkr::DeviceMemory _indexBufferMemory { nullptr };
-  vkr::Buffer _indexBuffer { nullptr };
-
   vkr::SurfaceKHR _surface { nullptr };
   vk::SurfaceCapabilitiesKHR _surfaceCapabilities {};
   vkr::SwapchainKHR _swapChain { nullptr };
@@ -110,10 +134,6 @@ public:
   vkr::RenderPass _renderPass { nullptr };
   vkr::Pipeline _pipeline { nullptr };
   vkr::PipelineLayout _pipelineLayout { nullptr };
-
-  vkr::ShaderModule _fragmentShader { nullptr };
-  vkr::ShaderModule _vertexShader { nullptr };
-
 private:
   struct QueueFamilyHints
   {
@@ -135,32 +155,13 @@ class Display
 {
 public:
   //! Sets up the display.
-  void setup(VulkanRenderer& renderer) {
-    if (!glfwInit())
-      throw std::runtime_error("Couldn't initialize GLFW.");
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-    _window = glfwCreateWindow(
-      width, height, "Title", nullptr, nullptr);
-
-    // Copy GLFW extensions
-    uint32_t glfwExtensionCount = 0;
-    auto glfwExtensions = glfwGetRequiredInstanceExtensions(
-      &glfwExtensionCount);
-    for (int i = 0; i < glfwExtensionCount; ++i)
-    {
-      renderer._extensions.emplace_back(glfwExtensions[i]);
-    }
-  }
+  void setup(VulkanRenderer& renderer);
 
 public:
   GLFWwindow* _window;
   int width = 1920;
   int height = 1080;
 };
-
 
 static constexpr int32_t MaxFramesInFlight = 2;
 
@@ -210,109 +211,34 @@ private:
   uint32_t _currentImageIndex = 0;
 };
 
-class VulkanEngine : public arete::Engine
+class VulkanEngine :
+    public arete::Engine
 {
 
 public:
-  void run() override
+  arete::ShaderHandle createShader(
+    arete::Shader::Stage stage,
+    const std::vector<uint8_t>& source) override
   {
-    struct Camera {
-      // Selfie / Position camera at the front of cube
-      glm::vec3 pos { 0, 0, 6.0f };
-      glm::quat rot { 1.0f, 0, 0, 0 };
-    } cam;
-    
-    auto proj = glm::perspective(
-      glm::radians<float>(45.0f), static_cast<float>(_display.width) / static_cast<float>(_display.height), 0.1f, 100.0f);
-    auto model = glm::mat4x4( 1.0f );
-
-    // Changing camera orientation example
-    cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
-
-    // Selfie / Look from front of the cube at 0,0,0
-    const auto view = glm::lookAt(
-      cam.pos,
-      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
-      glm::vec3(0, 1, 0) * cam.rot
-    );
-
-    const auto clip = glm::mat4x4(
-      1.0f,  0.0f, 0.0f, 0.0f,
-      0.0f, -1.0f, 0.0f, 0.0f,
-      0.0f,  0.0f, 0.5f, 0.0f,
-      0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
-
-    _display.setup(_renderer);
-    _renderer.setup();
-    _renderer.surface(_display._window);
-    _renderer.physicalDevice();
-    _renderer.logicalDevice();
-
-    _renderer.shaders(*this);
-
-    _renderer.swapChain();
-
-    _renderer.depthBuffer();
-    _renderer.uniformBuffer();
-    _renderer.vertexBuffer();
-    _renderer.indexBuffer();
-
-    _renderer.renderPass();
-
-    _renderer.framebuffers();
-
-    _renderer.pipeline();
-
-    _renderer.commands();
-
-    InFlightRendering rendering(_renderer);
-
-    float rotationY = 0;
-    float rotationX = 0;
-    auto uniform = reinterpret_cast<glm::mat4x4*>(
-      _renderer._uniformBufferMemory.mapMemory(0, sizeof(glm::mat4x4)));
-
-    while(!glfwWindowShouldClose(_display._window))
-    {
-      glfwPollEvents();
-
-      rotationY = 0;
-      rotationX = 0;
-
-      if(glfwGetKey(_display._window, GLFW_KEY_RIGHT) == GLFW_TRUE)
-      {
-        rotationY = -glm::radians<float>(1);
-      }
-      else if(glfwGetKey(_display._window, GLFW_KEY_LEFT) == GLFW_TRUE)
-      {
-        rotationY = glm::radians<float>(1);
-      }
-
-      if(glfwGetKey(_display._window, GLFW_KEY_UP) == GLFW_TRUE)
-      {
-        rotationX = -glm::radians<float>(1);
-      }
-      else if(glfwGetKey(_display._window, GLFW_KEY_DOWN) == GLFW_TRUE)
-      {
-        rotationX = glm::radians<float>(1);
-      }
-
-      if (rotationY)
-        model = glm::rotate(model, rotationY, {0,1,0});
-      if (rotationX)
-        model = glm::rotate(model, rotationX, {1,0,0});
-
-      *uniform = clip * proj * view * model;
-
-      rendering.draw();
-
-      if(glfwGetKey(_display._window, GLFW_KEY_ESCAPE))
-      {
-        glfwSetWindowShouldClose(_display._window, GLFW_TRUE);
-      }
-
-    }
+    return Engine::createShader(stage, source);
   }
+
+  arete::MaterialHandle createMaterial(
+    arete::ShaderHandle vertexShader,
+    arete::ShaderHandle fragmentShader) override
+  {
+    return Engine::createMaterial(vertexShader, fragmentShader);
+  }
+
+  arete::MeshHandle createMesh(
+    arete::MaterialHandle material,
+    const arete::Mesh::Vertices& vertices,
+    const arete::Mesh::Indices& indices) override
+  {
+    return Engine::createMesh(material, vertices, indices);
+  }
+
+  void run() override;
 
 private:
   VulkanRenderer _renderer;

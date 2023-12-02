@@ -1,6 +1,8 @@
 add_library(engine SHARED
         src/core.cpp
-        src/vulkan.cpp
+        src/vulkan/display.cpp
+        src/vulkan/renderer.cpp
+        src/vulkan/engine.cpp
         src/engine.cpp)
 
 find_package(Vulkan REQUIRED)
