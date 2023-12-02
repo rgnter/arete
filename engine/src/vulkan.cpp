@@ -590,7 +590,7 @@ void VulkanRenderer::pipeline()
     .pVertexAttributeDescriptions = vertexAttributeDescriptions.data()};
 
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo {
-    .topology = vk::PrimitiveTopology::eTriangleStrip
+    .topology = vk::PrimitiveTopology::eTriangleList
   };
 
   vk::PipelineViewportStateCreateInfo viewportStateCreateInfo {
@@ -602,7 +602,7 @@ void VulkanRenderer::pipeline()
     .depthClampEnable = VK_FALSE,
     .rasterizerDiscardEnable = VK_FALSE,
     .polygonMode = vk::PolygonMode::eFill,
-    .cullMode = vk::CullModeFlagBits::eNone,
+    .cullMode = vk::CullModeFlagBits::eBack,
     .frontFace = vk::FrontFace::eClockwise,
     .lineWidth = 1.0f,};
 
