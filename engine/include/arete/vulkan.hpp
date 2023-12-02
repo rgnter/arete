@@ -53,6 +53,9 @@ public:
   //! Setup vertex buffer.
   void vertexBuffer();
 
+  //! Setup index buffer.
+  void indexBuffer();
+
   //! Setup pipeline.
   void pipeline();
 
@@ -94,6 +97,9 @@ public:
 
   vkr::DeviceMemory _vertexBufferMemory { nullptr };
   vkr::Buffer _vertexBuffer { nullptr };
+
+  vkr::DeviceMemory _indexBufferMemory { nullptr };
+  vkr::Buffer _indexBuffer { nullptr };
 
   vkr::SurfaceKHR _surface { nullptr };
   vk::SurfaceCapabilitiesKHR _surfaceCapabilities {};
