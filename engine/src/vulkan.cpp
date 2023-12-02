@@ -9,7 +9,7 @@
 namespace vulkan
 {
 
-void Renderer::surface(GLFWwindow* window)
+void VulkanRenderer::surface(GLFWwindow* window)
 {
   // Create surface.
   VkSurfaceKHR directSurface;
@@ -19,11 +19,9 @@ void Renderer::surface(GLFWwindow* window)
   // Swap chain extension for device.
   _devExtensions.emplace_back(
     VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  _devExtensions.emplace_back(
-    VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
-void Renderer::physicalDevice()
+void VulkanRenderer::physicalDevice()
 {
   // Query physical devices.
   const vkr::PhysicalDevices physicalDevices(_instance);
@@ -34,7 +32,7 @@ void Renderer::physicalDevice()
          _physicalDevice.getProperties().deviceName.data());
 }
 
-void Renderer::logicalDevice()
+void VulkanRenderer::logicalDevice()
 {
   float queuePriorities[] = {0.0f};
 
@@ -86,7 +84,7 @@ void Renderer::logicalDevice()
         .ppEnabledExtensionNames = extensions.data()});
 }
 
-void Renderer::swapChain()
+void VulkanRenderer::swapChain()
 {
   // Query the surface formats supported by the physical device.
   const auto surfaceFormats
@@ -169,7 +167,7 @@ void Renderer::swapChain()
   }
 }
 
-void Renderer::framebuffers()
+void VulkanRenderer::framebuffers()
 {
   _framebuffers.reserve(_swapChainImageViews.size());
 
@@ -193,7 +191,7 @@ void Renderer::framebuffers()
   }
 }
 
-void Renderer::depthBuffer()
+void VulkanRenderer::depthBuffer()
 {
   _depthImageFormat = vk::Format::eD16Unorm;
   const vk::FormatProperties formatProperties
@@ -271,7 +269,7 @@ void Renderer::depthBuffer()
     });
 }
 
-void Renderer::uniformBuffer()
+void VulkanRenderer::uniformBuffer()
 {
   _uniformBuffer =  vkr::Buffer(
     _device,
@@ -353,7 +351,7 @@ struct Mesh
 
 } cube;
 
-void Renderer::vertexBuffer()
+void VulkanRenderer::vertexBuffer()
 {
   _vertexBuffer = vkr::Buffer(
     _device,
@@ -396,7 +394,7 @@ void Renderer::vertexBuffer()
   _vertexBuffer.bindMemory(*_vertexBufferMemory, 0);
 }
 
-void Renderer::renderPass()
+void VulkanRenderer::renderPass()
 {
   const std::array attachmentDescriptions = {
     // Surface attachment
@@ -445,42 +443,39 @@ void Renderer::renderPass()
 }
 
 
-void Renderer::shaders()
+class VulkanMaterial
 {
-  const auto readSpvBinary = [](const std::filesystem::path& shaderBinaryPath) {
-    const auto size = std::filesystem::file_size(shaderBinaryPath);
-    std::ifstream input(shaderBinaryPath, std::ios::binary);
-    if (input.bad())
-      throw std::runtime_error(
-        std::format("Couldn't find shader at '{}'", shaderBinaryPath.c_str()));
 
-    std::vector<uint8_t> buffer(size);
-    input.read(reinterpret_cast<char*>(buffer.data()), size);
-    return std::pair{buffer, size};
-  };
+};
 
-  const auto [vertexData, vertexLength] = readSpvBinary("cube-vert.spv");
-  const auto [fragmentData, fragmentLength] = readSpvBinary("cube-frag.spv");
-
-  assert(vertexData.capacity() % sizeof(uint32_t) == 0);
-  assert(fragmentData.capacity() % sizeof(uint32_t) == 0);
-
-  _vertexShader = vkr::ShaderModule(
-    _device,
-    vk::ShaderModuleCreateInfo{
-      .codeSize = vertexLength,
-      .pCode = reinterpret_cast<const uint32_t*>(vertexData.data())
-    });
-
-  _fragmentShader = vkr::ShaderModule(
-    _device,
-    vk::ShaderModuleCreateInfo{
-      .codeSize = fragmentLength,
-      .pCode = reinterpret_cast<const uint32_t*>(fragmentData.data())
-    });
+void VulkanRenderer::shaders(arete::Engine& engine)
+{
+  const auto& shaders = engine.shaders();
+  for (const auto& [handle, shader] : shaders)
+  {
+      if (shader.stage() == arete::Shader::Stage::Fragment)
+      {
+        _fragmentShader = vkr::ShaderModule(
+          _device,
+          vk::ShaderModuleCreateInfo{
+            .codeSize = shader.source().size(),
+            .pCode = reinterpret_cast<const uint32_t*>(shader.source().data())
+          });
+      }
+      if (shader.stage() == arete::Shader::Stage::Vertex)
+      {
+        const auto& source = shader.source();
+        _vertexShader = vkr::ShaderModule(
+          _device,
+          vk::ShaderModuleCreateInfo{
+            .codeSize = source.size(),
+            .pCode = reinterpret_cast<const uint32_t*>(source.data())
+          });
+      }
+  }
 }
 
-void Renderer::pipeline()
+void VulkanRenderer::pipeline()
 {
   const auto start = std::chrono::steady_clock::now();
   const vk::DescriptorSetLayoutBinding uniformDescriptorSetLayoutBinding {
@@ -584,7 +579,7 @@ void Renderer::pipeline()
   vk::PipelineRasterizationStateCreateInfo rasterizationStateCreateInfo {
     .depthClampEnable = VK_FALSE,
     .rasterizerDiscardEnable = VK_FALSE,
-    .polygonMode = vk::PolygonMode::eLine,
+    .polygonMode = vk::PolygonMode::eFill,
     .cullMode = vk::CullModeFlagBits::eFront,
     .frontFace = vk::FrontFace::eClockwise,
     .lineWidth = 1.0f,};
@@ -636,8 +631,7 @@ void Renderer::pipeline()
 
   std::array dynamicStates = {
     vk::DynamicState::eViewport,
-    vk::DynamicState::eScissor,
-    vk::DynamicState::ePolygonModeEXT
+    vk::DynamicState::eScissor
   };
 
   vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{
@@ -666,7 +660,7 @@ void Renderer::pipeline()
   const auto result = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 }
 
-void Renderer::commands()
+void VulkanRenderer::commands()
 {
   _commandPool = vkr::CommandPool(
     _device,
@@ -690,17 +684,17 @@ void Renderer::commands()
     _device, _queueFamilyHints.presentFamily.value(), 0);
 }
 
-void Renderer::setup()
+void VulkanRenderer::setup()
 {
   _extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   _extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
-  //_layers.emplace_back("VK_LAYER_KHRONOS_validation");
-  //_layers.emplace_back("VK_LAYER_RENDERDOC_Capture");
+  _layers.emplace_back("VK_LAYER_KHRONOS_validation");
+  _layers.emplace_back("VK_LAYER_RENDERDOC_Capture");
 
   const vk::ApplicationInfo applicationInfo {
     .pApplicationName = "Hello World",
     .applicationVersion = 1,
-    .pEngineName = "Engine",
+    .pEngineName = "VulkanEngine",
     .engineVersion = 1,
     .apiVersion = VK_API_VERSION_1_1,
   };
@@ -757,7 +751,7 @@ void Renderer::setup()
     _instance, debugMessengerInfo);*/
 }
 
-InFlightRendering::InFlightRendering(const Renderer& renderer)
+InFlightRendering::InFlightRendering(const VulkanRenderer& renderer)
   : _renderer(renderer)
 {
   const auto& device = _renderer._device;
@@ -868,9 +862,6 @@ void InFlightRendering::render()
   const auto& vertexBuffer = *_renderer._vertexBuffer;
   commandBuffer.bindVertexBuffers(
     0, {vertexBuffer}, {0});
-
-  // Poygon mode
-  commandBuffer.setPolygonModeEXT(vk::PolygonMode::eLine);
 
   // Scissor
   commandBuffer.setScissor(

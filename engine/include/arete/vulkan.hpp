@@ -1,6 +1,8 @@
 #ifndef ARETE_VULKAN_HPP
 #define ARETE_VULKAN_HPP
 
+#include "arete/engine.hpp"
+
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
@@ -22,12 +24,10 @@ namespace vulkan
 
 namespace vkr = vk::raii;
 
-//! Renderer.
-class Renderer
+//! VulkanRenderer.
+class VulkanRenderer
 {
-
 public:
-
   //! Setup surface.
   void surface(GLFWwindow* window);
 
@@ -59,7 +59,7 @@ public:
   void renderPass();
 
   //! Setup shaders.
-  void shaders();
+  void shaders(arete::Engine& engine);
 
   //! Setup command pool and command buffers.
   void commands();
@@ -129,7 +129,7 @@ class Display
 {
 public:
   //! Sets up the display.
-  void setup(Renderer& renderer) {
+  void setup(VulkanRenderer& renderer) {
     if (!glfwInit())
       throw std::runtime_error("Couldn't initialize GLFW.");
 
@@ -161,7 +161,7 @@ static constexpr int32_t MaxFramesInFlight = 2;
 class InFlightRendering
 {
 public:
-  explicit InFlightRendering(const Renderer& renderer);
+  explicit InFlightRendering(const VulkanRenderer& renderer);
   /**
    * Draws frame.
    */
@@ -180,7 +180,7 @@ private:
 
 private:
 private:
-  const Renderer& _renderer;
+  const VulkanRenderer& _renderer;
 
   std::array<vkr::Semaphore, MaxFramesInFlight> _imageAvailableSemaphores
     {
@@ -204,11 +204,11 @@ private:
   uint32_t _currentImageIndex = 0;
 };
 
-class Engine
+class VulkanEngine : public arete::Engine
 {
 
 public:
-  void run()
+  void run() override
   {
     auto position = glm::vec3(-6, 3, -5);
     auto proj = glm::perspective(
@@ -232,7 +232,7 @@ public:
     _renderer.physicalDevice();
     _renderer.logicalDevice();
 
-    _renderer.shaders();
+    _renderer.shaders(*this);
 
     _renderer.swapChain();
 
@@ -298,7 +298,7 @@ public:
   }
 
 private:
-  Renderer _renderer;
+  VulkanRenderer _renderer;
   Display _display;
 };
 
