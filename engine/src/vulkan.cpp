@@ -18,7 +18,8 @@ void VulkanRenderer::surface(GLFWwindow* window)
 
   // Swap chain extension for device.
   _devExtensions.emplace_back(
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+  );
 }
 
 void VulkanRenderer::physicalDevice()
@@ -316,37 +317,36 @@ struct Mesh
     glm::vec3 pos;
   };
 
-  const std::array<Vertex, 24> verticies = {
-      // front
-      Vertex{{-1.0f, -1.0f, +1.0f}},
+  const std::array<Vertex, 6> verticies = {
+      Vertex
+
+      // FRONT bottom-left
       {{+1.0f, -1.0f, +1.0f}},
+      {{-1.0f, -1.0f, +1.0f}},
       {{-1.0f, +1.0f, +1.0f}},
+
+      // FRONT bottom-left
       {{+1.0f, +1.0f, +1.0f}},
-      // back
-      {{+1.0f, -1.0f, -1.0f}},
-      {{-1.0f, -1.0f, -1.0f}},
-      {{+1.0f, +1.0f, -1.0f}},
-      {{-1.0f, +1.0f, -1.0f}},
-      // right
+      {{-1.0f, +1.0f, +1.0f}},
       {{+1.0f, -1.0f, +1.0f}},
-      {{+1.0f, -1.0f, -1.0f}},
-      {{+1.0f, +1.0f, +1.0f}},
-      {{+1.0f, +1.0f, -1.0f}},
-      // left
-      {{-1.0f, -1.0f, -1.0f}},
+  };
+
+  const std::array<Vertex, 12> verticies_indexed = {
+      Vertex
+
+      // FRONT bottom-left
       {{-1.0f, -1.0f, +1.0f}},
-      {{-1.0f, +1.0f, -1.0f}},
-      {{-1.0f, +1.0f, +1.0f}},
-      // top
-      {{-1.0f, +1.0f, +1.0f}},
+      {{+1.0f, -1.0f, +1.0f}},
       {{+1.0f, +1.0f, +1.0f}},
-      {{-1.0f, +1.0f, -1.0f}},
-      {{+1.0f, +1.0f, -1.0f}},
-      // bottom
-      {{-1.0f, -1.0f, -1.0f}},
-      {{+1.0f, -1.0f, -1.0f}},
-      {{-1.0f, -1.0f, +1.0f}},
-      {{+1.0f, -1.0f, +1.0f}}
+
+      // FRONT bottom-left
+  };
+
+  const std::array<short, 36> indices = {
+      // FRONT bottom-left
+      0, 1, 2
+      
+      // FRONT bottom-left
   };
 
 } cube;
@@ -879,7 +879,7 @@ void InFlightRendering::render()
   );
 
   commandBuffer.draw(
-    24, 1, 0, 0);
+    6, 1, 0, 0);
 
   commandBuffer.endRenderPass();
   commandBuffer.end();

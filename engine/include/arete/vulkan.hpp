@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <string_view>
 #include <filesystem>
@@ -151,8 +152,8 @@ public:
 
 public:
   GLFWwindow* _window;
-  int width = 800;
-  int height = 600;
+  int width = 1920;
+  int height = 1080;
 };
 
 
@@ -210,15 +211,25 @@ class VulkanEngine : public arete::Engine
 public:
   void run() override
   {
-    auto position = glm::vec3(-6, 3, -5);
+    struct Camera {
+      // Selfie / Position camera at the front of cube
+      glm::vec3 pos { 0, 0, 6.0f };
+      glm::quat rot { 1.0f, 0, 0, 0 };
+    } cam;
+    
     auto proj = glm::perspective(
-      glm::radians<float>(45.0f), 1.0f, 0.1f, 100.0f);
+      glm::radians<float>(45.0f), static_cast<float>(_display.width) / static_cast<float>(_display.height), 0.1f, 100.0f);
     auto model = glm::mat4x4( 1.0f );
 
+    // Changing camera orientation example
+    cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
+
+    // Selfie / Look from front of the cube at 0,0,0
     const auto view = glm::lookAt(
-      position,
-      glm::vec3(0.0f, 0.0f, 0.0f),
-      glm::vec3(0.0f, -1.0f, 0.0f));
+      cam.pos,
+      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+      glm::vec3(0, 1, 0) * cam.rot
+    );
 
     const auto clip = glm::mat4x4(
       1.0f,  0.0f, 0.0f, 0.0f,
