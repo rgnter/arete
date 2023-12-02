@@ -4,7 +4,9 @@
 #include <cstdint>
 
 #include <vector>
-#include <unordered_map>
+
+#include <glm/vec3.hpp>
+#include <glm/fwd.hpp>
 
 namespace arete
 {
@@ -19,21 +21,24 @@ namespace arete
       Vertex, Fragment
     };
 
-  public:
     //! Constructs shader with source which is bound to specified stage.
     //! @param stage Shader stage in the pipeline.
     //! @param source Shader source.
-    explicit Shader(Stage stage,
-                   std::vector<uint8_t> source) noexcept
+    explicit Shader(
+      const Stage stage,
+      std::vector<uint8_t> source) noexcept
       : _stage(stage)
       , _source(std::move(source))
     {}
 
-    Stage stage() const
+  public:
+    //! @returns Stage to which this shader is bound.
+    const Stage& stage() const
     {
       return _stage;
     }
 
+    //! @returns Source of this shader.
     const std::vector<uint8_t>& source() const
     {
       return _source;
@@ -54,13 +59,28 @@ namespace arete
   {
   public:
     //! Constructs material with specified shaders.
-    //! @param shaders Shader handles.
-    explicit Material(std::vector<ShaderHandle> shaders) noexcept
-        : _shaders(std::move(shaders))
+    //! @param vertexShader Vertex shader.
+    //! @param fragmentShader Fragment shader.
+    explicit Material(
+      const ShaderHandle vertexShader,
+      const ShaderHandle fragmentShader) noexcept
+        : _vertexShader(vertexShader)
+        , _fragmentShader(fragmentShader)
     {}
 
+    ShaderHandle vertexShader() const
+    {
+      return _vertexShader;
+    }
+
+    ShaderHandle fragmentShader() const
+    {
+      return _fragmentShader;
+    }
+
   private:
-    std::vector<ShaderHandle> _shaders;
+    ShaderHandle _vertexShader;
+    ShaderHandle _fragmentShader;
   };
 
   //! Mesh handle.
@@ -70,18 +90,33 @@ namespace arete
   class Mesh
   {
   public:
+    //! Single vertex element type.
+    using VertexElementType = glm::f32vec3;
+    //! Verticies.
+    using Vertices = std::vector<VertexElementType>;
+
+    //! Single index element type.
+    using IndexElementType = glm::u16vec3;
+    //! Indices.
+    using Indices = std::vector<IndexElementType>;
+
     //! Constructs model with specified material and model data.
     //! @param material Material handle.
-    //! @param data Mesh data.
+    //! @param vertices Mesh vertex data.
+    //! @param indices Mesh index data.
     explicit Mesh(MaterialHandle material,
-                  std::vector<uint16_t> data) noexcept
+                  Vertices vertices,
+                  Indices indices) noexcept
       : _material(material)
-      , _data(std::move(data))
+      , _vertices(std::move(vertices))
+      , _indices(std::move(indices))
     {}
 
   private:
     MaterialHandle _material;
-    std::vector<uint16_t> _data;
+
+    Vertices _vertices;
+    Indices _indices;
   };
 
   //! Model.
@@ -91,6 +126,6 @@ namespace arete
     std::vector<MeshHandle> _meshes;
   };
 
-}
+} // namespace arete
 
 #endif//ARETE_MESH_HPP

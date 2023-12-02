@@ -310,11 +310,14 @@ void VulkanRenderer::uniformBuffer()
   _uniformBuffer.bindMemory(*_uniformBufferMemory, 0);
 }
 
+static uint16_t indexCount = 0;
+
 struct Mesh
 {
   struct Vertex
   {
     glm::vec3 pos;
+    uint16_t index = indexCount++;
   };
 
   const std::array<Vertex, 24> verticies = {
@@ -637,11 +640,11 @@ void VulkanRenderer::pipeline()
       .binding = 0,
       .format = vk::Format::eR32G32B32Sfloat,
     },
-    /*vk::VertexInputAttributeDescription {
+    vk::VertexInputAttributeDescription {
       .location = 1,
       .binding = 0,
-      .format = vk::Format::eR32G32B32Sfloat,
-    }*/
+      .format = vk::Format::eR16Uint,
+    }
   };
 
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {

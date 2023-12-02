@@ -8,10 +8,11 @@ layout (std140, set = 0, binding = 0) uniform buf {
 } ubuf;
 
 layout (location = 0) in vec3 pos;
-//layout (location = 1) in vec3 inColor;
-//layout (location = 0) out vec3 outColor;
+
+layout (location = 0) in uint inPolygonIndex;
+layout (location = 0) out uint outPolygonIndex;
 
 void main() {
-//    outColor = inColor;
+    outPolygonIndex = inPolygonIndex;
     gl_Position = ubuf.mvp * vec4(pos, 1.0);
 }
