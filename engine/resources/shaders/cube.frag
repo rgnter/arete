@@ -4,8 +4,8 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 //layout (binding = 1) uniform sampler2D tex;
-layout (location = 0) in int polygonIndex;
 layout (location = 0) out vec4 outColor;
+layout (location = 1) in int polygonIndex;
 
 void main() {
     // polygonIndex = 

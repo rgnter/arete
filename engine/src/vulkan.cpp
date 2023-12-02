@@ -628,7 +628,8 @@ void VulkanRenderer::pipeline()
       .binding = 0,
       .stride = sizeof(Mesh::Vertex),
       .inputRate = vk::VertexInputRate::eVertex,
-    }};
+    }
+  };
 
   std::array vertexAttributeDescriptions {
     vk::VertexInputAttributeDescription {
@@ -640,13 +641,15 @@ void VulkanRenderer::pipeline()
       .location = 1,
       .binding = 0,
       .format = vk::Format::eR32G32B32Sfloat,
-    }*/};
+    }*/
+  };
 
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo {
     .vertexBindingDescriptionCount = vertexBindingDescriptions.size(),
     .pVertexBindingDescriptions = vertexBindingDescriptions.data(),
     .vertexAttributeDescriptionCount = vertexAttributeDescriptions.size(),
-    .pVertexAttributeDescriptions = vertexAttributeDescriptions.data()};
+    .pVertexAttributeDescriptions = vertexAttributeDescriptions.data()
+  };
 
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo {
     .topology = vk::PrimitiveTopology::eTriangleList
@@ -736,7 +739,9 @@ void VulkanRenderer::pipeline()
       .pColorBlendState = &colorBlendStateCreateInfo,
       .pDynamicState = &pipelineDynamicStateCreateInfo,
       .layout = *_pipelineLayout,
-      .renderPass = *_renderPass});
+      .renderPass = *_renderPass
+    }
+  );
 
   const auto result = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 }
@@ -923,11 +928,13 @@ void InFlightRendering::render()
   };
 
   commandBuffer.beginRenderPass(
-    renderPassBeginInfo, vk::SubpassContents::eInline);
+    renderPassBeginInfo, vk::SubpassContents::eInline
+  );
 
   commandBuffer.bindPipeline(
     vk::PipelineBindPoint::eGraphics,
-    *_renderer._pipeline);
+    *_renderer._pipeline
+  );
 
   // Bind descriptor sets
   const auto& pipelineLayout = *_renderer._pipelineLayout;
@@ -937,7 +944,8 @@ void InFlightRendering::render()
     pipelineLayout,
     0,
     descriptorSet,
-    nullptr);
+    nullptr
+  );
 
   // Bind VBOs
   const auto& vertexBuffer = *_renderer._vertexBuffer;
