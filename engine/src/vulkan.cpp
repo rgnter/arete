@@ -316,7 +316,7 @@ struct Mesh
 {
   struct Vertex
   {
-    glm::vec3 pos;
+    glm::vec3 pos { 0.0f, 0.0f, 0.0f };
     uint32_t index = indexCount++;
   };
 
@@ -362,7 +362,7 @@ struct Mesh
       {{+0.5f, -0.5f, +0.5f}},
   };
 
-  const std::array<short, 36> indices = {
+  const std::array<uint16_t, 36> indices = {
       // FRONT bottom-left
       2, 1, 0,
       // FRONT upper-right
@@ -639,11 +639,13 @@ void VulkanRenderer::pipeline()
       .location = 0,
       .binding = 0,
       .format = vk::Format::eR32G32B32Sfloat,
+      .offset =  0,
     },
     vk::VertexInputAttributeDescription {
       .location = 1,
       .binding = 0,
       .format = vk::Format::eR32Uint,
+      .offset = sizeof(glm::vec3),
     }
   };
 

@@ -6,7 +6,6 @@ int main(int argc, char** argv)
 {
   const auto readMeshBinary = [](const std::filesystem::path& shaderBinaryPath)
   {
-    const auto size = std::filesystem::file_size(shaderBinaryPath);
     std::ifstream input(shaderBinaryPath, std::ios::binary);
     if (input.bad())
       throw std::runtime_error(
