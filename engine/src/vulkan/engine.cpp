@@ -1,9 +1,22 @@
 #include "arete/vulkan.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+
 namespace arete
 {
 
-uint32_t vulkanFindMemoryType(const vk::PhysicalDeviceMemoryProperties& memoryProperties, const vk::MemoryRequirements& memoryRequirements)
+//! Finds memory type satisfying memory requirements.
+//! @param memoryProperties Memory properties.
+//! @param memoryRequirements Memory requirements.
+//! @param memoryFlags Memory flags.
+//! @returns Memory type index.
+//! @throws If no appropriate memory was found.
+uint32_t vulkanFindMemoryType(
+  const vk::PhysicalDeviceMemoryProperties& memoryProperties,
+  const vk::MemoryRequirements& memoryRequirements,
+  const vk::MemoryPropertyFlags memoryFlags)
 {
   int memoryTypeIndex = 0;
 
@@ -13,7 +26,7 @@ uint32_t vulkanFindMemoryType(const vk::PhysicalDeviceMemoryProperties& memoryPr
     if (memoryRequirements.memoryTypeBits & memoryTypeBit)
     {
       const auto memoryType = memoryProperties.memoryTypes[memoryTypeIndex];
-      if (memoryType.propertyFlags & (vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent))
+      if (memoryType.propertyFlags & memoryFlags)
       {
         // we found the right memory, yippie!!
         return memoryTypeIndex;
@@ -24,7 +37,10 @@ uint32_t vulkanFindMemoryType(const vk::PhysicalDeviceMemoryProperties& memoryPr
   throw std::runtime_error("Couldn't find the right memory type");
 }
 
-void VulkanMesh::indexBuffer(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const arete::Mesh& mesh)
+void VulkanMesh::indexBuffer(
+  const vkr::Device& device,
+  const vkr::PhysicalDevice& physicalDevice,
+  const Mesh& mesh)
 {
   const auto& indices = mesh.indices();
   const auto indicesSize = indices.size() * sizeof(Mesh::IndexElementType);
@@ -40,7 +56,11 @@ void VulkanMesh::indexBuffer(const vk::raii::Device& device, const vk::raii::Phy
 
   const auto memoryProperties = physicalDevice.getMemoryProperties();
   const auto memoryRequirements = _indexBuffer.getMemoryRequirements();
-  uint32_t memoryTypeIndex = vulkanFindMemoryType(memoryProperties, memoryRequirements);
+  const uint32_t memoryTypeIndex = vulkanFindMemoryType(
+    memoryProperties,
+    memoryRequirements,
+    vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+    );
 
   _indexBufferMemory = vkr::DeviceMemory(
     device,
@@ -56,7 +76,10 @@ void VulkanMesh::indexBuffer(const vk::raii::Device& device, const vk::raii::Phy
   _indexBuffer.bindMemory(*_indexBufferMemory, 0);
 }
 
-void VulkanMesh::vertexBuffer(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const arete::Mesh& mesh)
+void VulkanMesh::vertexBuffer(
+  const vkr::Device& device,
+  const vkr::PhysicalDevice& physicalDevice,
+  const Mesh& mesh)
 {
   const auto& vertices = mesh.vertices();
   const auto verticesSize = vertices.size() * sizeof(Mesh::VertexElementType);
@@ -71,7 +94,10 @@ void VulkanMesh::vertexBuffer(const vk::raii::Device& device, const vk::raii::Ph
 
   const auto memoryProperties = physicalDevice.getMemoryProperties();
   const auto memoryRequirements = _vertexBuffer.getMemoryRequirements();
-  uint32_t memoryTypeIndex = vulkanFindMemoryType(memoryProperties, memoryRequirements);
+  const uint32_t memoryTypeIndex = vulkanFindMemoryType(
+    memoryProperties,
+    memoryRequirements,
+    vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 
   _vertexBufferMemory = vkr::DeviceMemory(
     device,
@@ -101,7 +127,12 @@ void VulkanEngine::run()
   } cam;
 
   auto proj = glm::perspective(
-    glm::radians<float>(45.0f), static_cast<float>(_display.width) / static_cast<float>(_display.height), 0.1f, 100.0f);
+    glm::radians<float>(45.0f),
+    static_cast<float>(_display.width) / static_cast<float>(_display.height),
+    0.1f,
+    100.0f
+  );
+
   auto model = glm::mat4x4( 1.0f );
 
   // Changing camera orientation example
@@ -141,7 +172,11 @@ void VulkanEngine::run()
 
   _renderer.commands();
 
-  InFlightRendering rendering(_renderer);
+  const auto& mesh = getMesh(_mesh._mesh);
+  _mesh.indexBuffer(_renderer._device, _renderer._physicalDevice, mesh);
+  _mesh.vertexBuffer(_renderer._device, _renderer._physicalDevice, mesh);
+
+  InFlightRendering rendering(_renderer, *this);
 
   float rotationY = 0;
   float rotationX = 0;

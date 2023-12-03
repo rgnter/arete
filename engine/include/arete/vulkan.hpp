@@ -8,14 +8,9 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 
 #include <string_view>
-#include <filesystem>
 #include <array>
-#include <memory>
-#include <fstream>
 #include <format>
 #include <vector>
 
@@ -24,33 +19,37 @@ namespace arete
 
 namespace vkr = vk::raii;
 
-//! Finds memory type satisfying memory requirements.
-//! @param memoryProperties Memory properties.
-//! @param memoryRequirements Memory requirements.
-//! @returns Memory type index.
-//! @throws If no appropriate memory was found.
-uint32_t vulkanFindMemoryType(const vk::PhysicalDeviceMemoryProperties& memoryProperties,
-                                 const vk::MemoryRequirements& memoryRequirements);
+//! Vulkan shader.
+struct VulkanShader
+{
+  ShaderHandle _shader { 0 };
+  vkr::ShaderModule _vulkanShader { nullptr };
+};
 
 //! Vulkan material.
 struct VulkanMaterial
 {
-  vkr::ShaderModule _fragmentShader { nullptr };
-  vkr::ShaderModule _vertexShader { nullptr };
+  MaterialHandle _material { 0 };
+  VulkanShader _vertexShader;
+  VulkanShader _fragmentShader;
 };
 
 //! Vulkan mesh.
 struct VulkanMesh
 {
+  MeshHandle _mesh { 0 };
   vkr::Buffer _vertexBuffer { nullptr };
   vkr::DeviceMemory _vertexBufferMemory { nullptr };
-
   vkr::Buffer _indexBuffer { nullptr };
   vkr::DeviceMemory _indexBufferMemory { nullptr };
 
-  void indexBuffer(const vkr::Device& device, const vkr::PhysicalDevice& physicalDevice, const Mesh& mesh);
+  void indexBuffer(const vkr::Device& device,
+                   const vkr::PhysicalDevice& physicalDevice,
+                   const Mesh& mesh);
 
-  void vertexBuffer(const vkr::Device& device, const vkr::PhysicalDevice& physicalDevice, const Mesh& mesh);
+  void vertexBuffer(const vkr::Device& device,
+                    const vkr::PhysicalDevice& physicalDevice,
+                    const Mesh& mesh);
 };
 
 } // namespace arete
@@ -134,6 +133,7 @@ public:
   vkr::RenderPass _renderPass { nullptr };
   vkr::Pipeline _pipeline { nullptr };
   vkr::PipelineLayout _pipelineLayout { nullptr };
+
 private:
   struct QueueFamilyHints
   {
@@ -165,10 +165,14 @@ public:
 
 static constexpr int32_t MaxFramesInFlight = 2;
 
+class VulkanEngine;
+
 class InFlightRendering
 {
 public:
-  explicit InFlightRendering(const VulkanRenderer& renderer);
+  explicit InFlightRendering(
+    const VulkanRenderer& renderer,
+    const VulkanEngine& engine);
   /**
    * Draws frame.
    */
@@ -188,6 +192,7 @@ private:
 private:
 private:
   const VulkanRenderer& _renderer;
+  const VulkanEngine& _engine;
 
   std::array<vkr::Semaphore, MaxFramesInFlight> _imageAvailableSemaphores
     {
@@ -216,35 +221,26 @@ class VulkanEngine :
 {
 
 public:
-  arete::ShaderHandle createShader(
-    arete::Shader::Stage stage,
-    const std::vector<uint8_t>& source) override
-  {
-    return Engine::createShader(stage, source);
-  }
-
-  arete::MaterialHandle createMaterial(
-    arete::ShaderHandle vertexShader,
-    arete::ShaderHandle fragmentShader) override
-  {
-    return Engine::createMaterial(vertexShader, fragmentShader);
-  }
-
   arete::MeshHandle createMesh(
     arete::MaterialHandle material,
     const arete::Mesh::Vertices& vertices,
     const arete::Mesh::Indices& indices) override
   {
-    return Engine::createMesh(material, vertices, indices);
+    auto meshHandle = arete::Engine::createMesh(material, vertices, indices);
+    const auto& mesh = getMesh(meshHandle);
+    _mesh._mesh = meshHandle;
+    return meshHandle;
   }
 
   void run() override;
 
-private:
+public:
+  arete::VulkanMesh _mesh;
+
   VulkanRenderer _renderer;
   Display _display;
 };
 
 } // namespace vulkan
 
-#endif//ARETE_VULKAN_HPP
+#endif //ARETE_VULKAN_HPP

@@ -14,11 +14,11 @@ namespace arete
 
 //! VulkanEngine.
 class Engine {
+public:
 
   template<typename Key, typename Value>
   using Map = std::unordered_map<Key, Value>;
 
-public:
   //! Creates shader.
   //! @param stage Shader stage.
   //! @param source Shader source.

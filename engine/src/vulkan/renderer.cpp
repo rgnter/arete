@@ -1,5 +1,6 @@
 #include "arete/vulkan.hpp"
 
+#include <chrono>
 
 namespace vulkan
 {
@@ -428,35 +429,56 @@ void VulkanRenderer::renderPass()
 }
 
 
+std::array _materials = {
+  arete::VulkanMaterial{}
+};
+
+std::array _meshes = {
+  arete::VulkanMesh{}
+};
+
 void VulkanRenderer::shaders(arete::Engine& engine)
 {
-  /*
+  arete::VulkanShader vertexShader;
+  arete::VulkanShader fragmentShader;
+
   const auto& shaders = engine.shaders();
   for (const auto& [handle, shader]: shaders)
   {
     if (shader.stage() == arete::Shader::Stage::Fragment)
     {
-      _fragmentShader = vkr::ShaderModule(
+      fragmentShader = {
+        ._shader =  handle,
+        ._vulkanShader = vkr::ShaderModule(
         _device,
         vk::ShaderModuleCreateInfo{
           .codeSize = shader.source().size(),
-          .pCode = reinterpret_cast<const uint32_t*>(shader.source().data())});
+          .pCode = reinterpret_cast<const uint32_t*>(shader.source().data())
+        })
+      };
     }
     if (shader.stage() == arete::Shader::Stage::Vertex)
     {
-      const auto& source = shader.source();
-      _vertexShader = vkr::ShaderModule(
+      vertexShader = {
+        ._shader =  handle,
+        ._vulkanShader = vkr::ShaderModule(
         _device,
         vk::ShaderModuleCreateInfo{
-          .codeSize = source.size(),
-          .pCode = reinterpret_cast<const uint32_t*>(source.data())});
+          .codeSize = shader.source().size(),
+          .pCode = reinterpret_cast<const uint32_t*>(shader.source().data())
+        })
+      };
     }
-  }*/
+  }
+
+  _materials[0] = {
+    ._vertexShader =  std::move(vertexShader),
+    ._fragmentShader = std::move(fragmentShader),
+  };
 }
 
 void VulkanRenderer::pipeline()
 {
-  const auto start = std::chrono::steady_clock::now();
   const vk::DescriptorSetLayoutBinding uniformDescriptorSetLayoutBinding{
     .descriptorType = vk::DescriptorType::eUniformBuffer,
     .descriptorCount = 1,
@@ -508,19 +530,18 @@ void VulkanRenderer::pipeline()
 
   _device.updateDescriptorSets(writeUniformDescriptorSet, nullptr);
 
-  /*
   std::array pipelineShaderStageCreateInfos{
     vk::PipelineShaderStageCreateInfo{
       .stage = vk::ShaderStageFlagBits::eVertex,
-      .module = *_vertexShader,
+      .module = *(_materials[0]._vertexShader._vulkanShader),
       .pName = "main",
     },
     vk::PipelineShaderStageCreateInfo{
       .stage = vk::ShaderStageFlagBits::eFragment,
-      .module = *_fragmentShader,
+      .module = *(_materials[0]._fragmentShader._vulkanShader),
       .pName = "main",
     },
-  };*/
+  };
 
   // Vertex buffer
   std::array vertexBindingDescriptions{
@@ -619,8 +640,8 @@ void VulkanRenderer::pipeline()
     _device,
     nullptr,
     vk::GraphicsPipelineCreateInfo{
-      /*.stageCount = pipelineShaderStageCreateInfos.size(),
-      .pStages = pipelineShaderStageCreateInfos.data(),*/
+      .stageCount = pipelineShaderStageCreateInfos.size(),
+      .pStages = pipelineShaderStageCreateInfos.data(),
       .pVertexInputState = &vertexInputStateCreateInfo,
       .pInputAssemblyState = &inputAssemblyStateCreateInfo,
       .pTessellationState = nullptr,
@@ -632,8 +653,6 @@ void VulkanRenderer::pipeline()
       .pDynamicState = &pipelineDynamicStateCreateInfo,
       .layout = *_pipelineLayout,
       .renderPass = *_renderPass});
-
-  const auto result = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 }
 
 void VulkanRenderer::commands()
@@ -721,8 +740,8 @@ void VulkanRenderer::setup()
 }
 
 
-InFlightRendering::InFlightRendering(const VulkanRenderer& renderer)
-    : _renderer(renderer)
+InFlightRendering::InFlightRendering(const VulkanRenderer& renderer, const VulkanEngine& engine)
+    : _renderer(renderer), _engine(engine)
 {
   const auto& device = _renderer._device;
   // Image available semaphores
@@ -831,19 +850,19 @@ void InFlightRendering::render()
     nullptr
   );
 
-  /*
+
   // Bind VBOs
-  const auto& vertexBuffer = *_renderer._vertexBuffer;
+  const auto& vertexBuffer = *_engine._mesh._vertexBuffer;
   commandBuffer.bindVertexBuffers(
     0, {vertexBuffer}, {0}
   );
 
   // Bind IBO
-  const auto& indexBuffer = *_renderer._indexBuffer;
+  const auto& indexBuffer = *_engine._mesh._indexBuffer;
   commandBuffer.bindIndexBuffer(
     indexBuffer, 0, vk::IndexType::eUint16
   );
-*/
+
 
   // Scissor
   commandBuffer.setScissor(

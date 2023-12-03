@@ -7,3 +7,6 @@
 [submodule "3rd-party/OpenFBX"]
 	path = 3rd-party/OpenFBX
 	url = https://github.com/nem0/OpenFBX.git
+[submodule "3rd-party/miniz"]
+	path = 3rd-party/miniz
+	url = https://github.com/richgel999/miniz
