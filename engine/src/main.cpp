@@ -63,10 +63,8 @@ int main(int argc, char** argv)
     vertexShader,
     fragmentShader);
 
-
-  
   auto data = readMeshBinary("resources/cube.obj");
-  engine.createMesh(
+  auto mesh = engine.createMesh(
     material,
     arete::Mesh::Vertices{
       // FRONT
@@ -81,7 +79,6 @@ int main(int argc, char** argv)
        {-0.5f, +0.5f, -0.5f},
        {+0.5f, +0.5f, -0.5f},
 
-
        // RIGHT
        {+0.5f, -0.5f, -0.5f},
        {+0.5f, -0.5f, +0.5f},
@@ -93,7 +90,6 @@ int main(int argc, char** argv)
        {-0.5f, -0.5f, +0.5f},
        {-0.5f, +0.5f, -0.5f},
        {-0.5f, +0.5f, +0.5f},
-
 
        // TOP
        {-0.5f, +0.5f, -0.5f},
@@ -118,7 +114,6 @@ int main(int argc, char** argv)
         // BACK
         {5, 7, 6},
 
-
         // RIGHT
         {10, 8, 9},
         // RIGHT
@@ -128,7 +123,6 @@ int main(int argc, char** argv)
         {14, 13, 12},
         // LEFT
         {13, 14, 15},
-
 
         // TOP
         {18, 16, 17},
@@ -140,6 +134,68 @@ int main(int argc, char** argv)
         // BOTTOM
         {21, 22, 23}
     });
+
+  /*
+  //! Player input component.
+  //! Simple spatial translations.
+  class PlayerInputComponent
+      : arete::InputComponent
+  {
+  public:
+    void Handle2DInput(float value)
+    {
+      
+    }
+
+    void Handle1DInput(float value, int64_t keyId) override
+    {
+      glm::vec3 axis;
+      if (value == INPUT_RIGHT)
+        axis = {1, 0, 0};
+      if (value == INPUT_LEFT)
+        axis = {-1, 0, 0};
+      if (value == INPUT_FORWARD)
+        axis = {0, 0, 1};
+      if (value == INPUT_BACKWARD)
+        axis = {0, 0, -1};
+
+      _spatial.translate(axis * value);
+    }
+
+  private:
+    arete::SpatialComponent _spatial;
+
+  };
+
+  //! Player actor.
+  class Player
+      : arete::Actor
+  {
+  public:
+    void OnCreate(Scene& scene) override
+    {
+      // Create the mesh component.
+      _mesh = CreateComponent<arte::MeshComponent>(
+        arete::assets::find("primitives/cube.fbx"),
+        arete::assets::find("primitives/materials/cube.mat"));
+
+      // Create the spatial component.
+      _spatial = CreateComponent<arete::SpatialComponent>();
+
+      // Create the input component.
+      _input = CreateComponent<PlayerInputComponent>(_spatial);
+    }
+
+    void OnDestroy() override
+    {
+    }
+
+  private:
+    arete::Ref<arete::MeshComponent> _mesh;
+    arete::Ref<arete::SpatialComponent> _spatial;
+    arete::Ref<arete::InputComponent> _input;
+  };
+*/
 
   engine.run();
 }

@@ -126,26 +126,26 @@ void VulkanEngine::run()
     glm::quat rot { 1.0f, 0, 0, 0 };
   } cam;
 
-  auto proj = glm::perspective(
+  _pushConstants.proj = glm::perspective(
     glm::radians<float>(45.0f),
     static_cast<float>(_display.width) / static_cast<float>(_display.height),
     0.1f,
     100.0f
   );
 
-  auto model = glm::mat4x4( 1.0f );
+  _pushConstants.model = glm::mat4x4( 1.0f );
 
   // Changing camera orientation example
   cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
 
   // Selfie / Look from front of the cube at 0,0,0
-  const auto view = glm::lookAt(
+  _pushConstants.view = glm::lookAt(
     cam.pos,
     cam.pos + glm::vec3(0, 0, 1) * cam.rot,
     glm::vec3(0, 1, 0) * cam.rot
   );
 
-  const auto clip = glm::mat4x4(
+  _pushConstants.clip = glm::mat4x4(
     1.0f,  0.0f, 0.0f, 0.0f,
     0.0f, -1.0f, 0.0f, 0.0f,
     0.0f,  0.0f, 0.5f, 0.0f,
@@ -215,11 +215,10 @@ void VulkanEngine::run()
     }
 
     if (rotationY)
-      model = glm::rotate(model, rotationY, {0,1,0});
+      _pushConstants.model = glm::rotate(_pushConstants.model, rotationY, {0,1,0});
     if (rotationX)
-      model = glm::rotate(model, rotationX, {1,0,0});
+      _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
 
-    *uniform = clip * proj * view * model;
 
     rendering.draw();
 

@@ -404,11 +404,19 @@ void VulkanRenderer::pipeline()
       .bindingCount = 1,
       .pBindings = &uniformDescriptorSetLayoutBinding});
 
+  // Push constants
+  vk::PushConstantRange pushConstantRange {
+    .offset = 0,
+    .size = sizeof(arete::PushConstants)
+  };
+
   _pipelineLayout = vkr::PipelineLayout(
     _device,
     vk::PipelineLayoutCreateInfo{
       .setLayoutCount = 1,
       .pSetLayouts = &(*_uniformDescriptorLayout),
+      .pushConstantRangeCount = 1,
+      .pPushConstantRanges = &pushConstantRange,
     });
 
   // Uniform buffer
@@ -751,6 +759,14 @@ void InFlightRendering::render()
   // Bind descriptor sets
   const auto& pipelineLayout = *_renderer._pipelineLayout;
   const auto& descriptorSet = *_renderer._uniformDescriptorSets.front();
+
+  commandBuffer.pushConstants(
+    pipelineLayout,
+    vk::ShaderStageFlagBits::eVertex,
+    0,
+    vk::ArrayProxy<const arete::PushConstants>({_engine._pushConstants})
+  );
+
   commandBuffer.bindDescriptorSets(
     vk::PipelineBindPoint::eGraphics,
     pipelineLayout,
@@ -758,7 +774,6 @@ void InFlightRendering::render()
     descriptorSet,
     nullptr
   );
-
 
   // Bind VBOs
   const auto& vertexBuffer = *_engine._mesh._vertexBuffer;
@@ -771,7 +786,6 @@ void InFlightRendering::render()
   commandBuffer.bindIndexBuffer(
     indexBuffer, 0, vk::IndexType::eUint16
   );
-
 
   // Scissor
   commandBuffer.setScissor(
