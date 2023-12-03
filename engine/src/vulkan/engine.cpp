@@ -173,8 +173,14 @@ void VulkanEngine::run()
   _renderer.commands();
 
   const auto& mesh = getMesh(_mesh._mesh);
-  _mesh.indexBuffer(_renderer._device, _renderer._physicalDevice, mesh);
-  _mesh.vertexBuffer(_renderer._device, _renderer._physicalDevice, mesh);
+  _mesh.indexBuffer(
+    _renderer._device,
+    _renderer._physicalDevice,
+    mesh);
+  _mesh.vertexBuffer(
+    _renderer._device,
+    _renderer._physicalDevice,
+    mesh);
 
   InFlightRendering rendering(_renderer, *this);
 
@@ -221,7 +227,6 @@ void VulkanEngine::run()
     {
       glfwSetWindowShouldClose(_display._window, GLFW_TRUE);
     }
-
   }
 }
 

@@ -294,92 +294,6 @@ void VulkanRenderer::uniformBuffer()
   _uniformBuffer.bindMemory(*_uniformBufferMemory, 0);
 }
 
-struct Mesh
-{
-  struct Vertex
-  {
-    glm::vec3 pos{0.0f, 0.0f, 0.0f};
-    uint32_t index = 0;
-  };
-
-  const std::array<Vertex, 24> verticies = {
-    Vertex
-
-    // FRONT
-    {{-0.5f, -0.5f, +0.5f}, 1},
-    {{+0.5f, -0.5f, +0.5f}, 1},
-    {{-0.5f, +0.5f, +0.5f}, 1},
-    {{+0.5f, +0.5f, +0.5f}, 1},
-
-    // BACK
-    {{-0.5f, -0.5f, -0.5f}, 2},
-    {{+0.5f, -0.5f, -0.5f}, 2},
-    {{-0.5f, +0.5f, -0.5f}, 2},
-    {{+0.5f, +0.5f, -0.5f}, 2},
-
-
-    // RIGHT
-    {{+0.5f, -0.5f, -0.5f}, 3},
-    {{+0.5f, -0.5f, +0.5f}, 3},
-    {{+0.5f, +0.5f, -0.5f}, 3},
-    {{+0.5f, +0.5f, +0.5f}, 3},
-
-    // LEFT
-    {{-0.5f, -0.5f, -0.5f}},
-    {{-0.5f, -0.5f, +0.5f}},
-    {{-0.5f, +0.5f, -0.5f}},
-    {{-0.5f, +0.5f, +0.5f}},
-
-
-    // TOP
-    {{-0.5f, +0.5f, -0.5f}},
-    {{+0.5f, +0.5f, -0.5f}},
-    {{-0.5f, +0.5f, +0.5f}},
-    {{+0.5f, +0.5f, +0.5f}},
-
-    // BOTTOM
-    {{-0.5f, -0.5f, -0.5f}},
-    {{+0.5f, -0.5f, -0.5f}},
-    {{-0.5f, -0.5f, +0.5f}},
-    {{+0.5f, -0.5f, +0.5f}},
-  };
-
-  const std::array<uint16_t, 36> indices = {
-    // FRONT bottom-left
-    2, 1, 0,
-    // FRONT upper-right
-    1, 2, 3,
-
-    // BACK
-    6, 4, 5,
-    // BACK
-    5, 7, 6,
-
-
-    // RIGHT
-    10, 8, 9,
-    // RIGHT
-    9, 11, 10,
-
-    // LEFT
-    14, 13, 12,
-    // LEFT
-    13, 14, 15,
-
-
-    // TOP
-    18, 16, 17,
-    // TOP
-    17, 19, 18,
-
-    // BOTTOM
-    22, 21, 20,
-    // BOTTOM
-    21, 22, 23};
-
-} cube;
-
-
 void VulkanRenderer::renderPass()
 {
   const std::array attachmentDescriptions = {
@@ -547,7 +461,7 @@ void VulkanRenderer::pipeline()
   std::array vertexBindingDescriptions{
     vk::VertexInputBindingDescription{
       .binding = 0,
-      .stride = sizeof(Mesh::Vertex),
+      .stride = sizeof(arete::Mesh::VertexElementType),
       .inputRate = vk::VertexInputRate::eVertex,
     }};
 
@@ -557,13 +471,8 @@ void VulkanRenderer::pipeline()
       .binding = 0,
       .format = vk::Format::eR32G32B32Sfloat,
       .offset = 0,
-    },
-    vk::VertexInputAttributeDescription{
-      .location = 1,
-      .binding = 0,
-      .format = vk::Format::eR32Uint,
-      .offset = sizeof(glm::vec3),
-    }};
+    }
+  };
 
   vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{
     .vertexBindingDescriptionCount = vertexBindingDescriptions.size(),

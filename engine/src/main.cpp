@@ -63,11 +63,83 @@ int main(int argc, char** argv)
     vertexShader,
     fragmentShader);
 
+
+  
   auto data = readMeshBinary("resources/cube.obj");
   engine.createMesh(
     material,
-    data.first,
-    data.second);
+    arete::Mesh::Vertices{
+      // FRONT
+       {-0.5f, -0.5f, +0.5f},
+       {+0.5f, -0.5f, +0.5f},
+       {-0.5f, +0.5f, +0.5f},
+       {+0.5f, +0.5f, +0.5f},
+
+       // BACK
+       {-0.5f, -0.5f, -0.5f},
+       {+0.5f, -0.5f, -0.5f},
+       {-0.5f, +0.5f, -0.5f},
+       {+0.5f, +0.5f, -0.5f},
+
+
+       // RIGHT
+       {+0.5f, -0.5f, -0.5f},
+       {+0.5f, -0.5f, +0.5f},
+       {+0.5f, +0.5f, -0.5f},
+       {+0.5f, +0.5f, +0.5f},
+
+       // LEFT
+       {-0.5f, -0.5f, -0.5f},
+       {-0.5f, -0.5f, +0.5f},
+       {-0.5f, +0.5f, -0.5f},
+       {-0.5f, +0.5f, +0.5f},
+
+
+       // TOP
+       {-0.5f, +0.5f, -0.5f},
+       {+0.5f, +0.5f, -0.5f},
+       {-0.5f, +0.5f, +0.5f},
+       {+0.5f, +0.5f, +0.5f},
+
+       // BOTTOM
+       {-0.5f, -0.5f, -0.5f},
+       {+0.5f, -0.5f, -0.5f},
+       {-0.5f, -0.5f, +0.5f},
+       {+0.5f, -0.5f, +0.5f},
+    },
+    arete::Mesh::Indices {
+      // FRONT bottom-left
+        {2, 1, 0},
+        // FRONT upper-right
+        {1, 2, 3},
+
+        // BACK
+        {6, 4, 5},
+        // BACK
+        {5, 7, 6},
+
+
+        // RIGHT
+        {10, 8, 9},
+        // RIGHT
+        {9, 11, 10},
+
+        // LEFT
+        {14, 13, 12},
+        // LEFT
+        {13, 14, 15},
+
+
+        // TOP
+        {18, 16, 17},
+        // TOP
+        {17, 19, 18},
+
+        // BOTTOM
+        {22, 21, 20},
+        // BOTTOM
+        {21, 22, 23}
+    });
 
   engine.run();
 }
