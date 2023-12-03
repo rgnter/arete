@@ -23,7 +23,7 @@ public:
   //! @param stage Shader stage.
   //! @param source Shader source.
   //! @returns Unique shader handle.
-  ShaderHandle createShader(
+  virtual ShaderHandle createShader(
     Shader::Stage stage,
     const std::vector<uint8_t>& source);
 
@@ -36,7 +36,7 @@ public:
   //! @param vertexShader Vertex shader handle.
   //! @param fragmentShader Fragment shader handle.
   //! @returns Unique material handle.
-  MaterialHandle createMaterial(
+  virtual MaterialHandle createMaterial(
     ShaderHandle vertexShader,
     ShaderHandle fragmentShader);
 
@@ -50,7 +50,7 @@ public:
   //! @param vertices Vertices.
   //! @param indices Indices.
   //! @returns Unique material handle.
-  MeshHandle createMesh(
+  virtual MeshHandle createMesh(
     MaterialHandle material,
     const Mesh::Vertices& vertices,
     const Mesh::Indices& indices);
@@ -67,7 +67,7 @@ public:
 
   virtual void run() = 0;
 
-private:
+protected:
   ShaderHandle _shaderIndex { 0 };
   Map<ShaderHandle, Shader> _shaders;
 
@@ -76,6 +76,8 @@ private:
 
   MeshHandle _meshIndex { 0 };
   Map<MeshHandle, Mesh> _meshes;
+
+  Map<MaterialHandle, Mesh> _meshesByMaterial;
 };
 
 } // namespace arete
