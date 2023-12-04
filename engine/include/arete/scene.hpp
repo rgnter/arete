@@ -7,7 +7,7 @@ namespace arete
 class Scene
 {
 
-}
+};
 
 }
 
