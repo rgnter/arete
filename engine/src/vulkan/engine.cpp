@@ -156,52 +156,75 @@ void VulkanEngine::run()
 
   _glfwInput.setup(_display._window);
 
-  // _input.mapInputToAction(arete::input::InputKey::KEY_A,
-  //     arete::input::InputAction{
-  //     .actionName = "strafe",
-  //     .scale = -1.f
-  //     }
-  // );
+  // auto & actionMap = _glfwInput.createActionMap();
 
-  // _input.mapInputToAction(arete::input::InputKey::KEY_D,
-  //     arete::input::InputAction{
-  //     .actionName = "strafe",
-  //     .scale = 1.f
-  //     }
-  // );
+  // auto & action2 = actionMap.createAction(DataType::1D, );
+  // auto & action2 = actionMap.createAction(DataType::2D);
 
-  // _input.mapInputToAction(arete::input::InputKey::MOUSE_LEFT,
-  //     arete::input::InputAction{
-  //     .actionName = "click"
-  //     }
-  // );
+  // action.AddKey(Key, )
 
-  // _input.mapInputToAction(arete::input::InputKey::GAMEPAD_L_THUMB_X,
-  //     arete::input::InputAction{
-  //     .actionName = "strafe",
-  //     .scale = 1.f
-  //     }
-  // );
 
-  // _input.registerActionCallback("strafe",
-  //     arete::input::Input::ActionCallback{
-  //         .ref = "MyGame",
-  //         .func = [](arete::input::InputSource source, int sourceIndex, float value) {
-  //             // std::cout << "strafing" << std::endl;
-  //             return true;
-  //         }
-  //     }
-  // );
+  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_A,
+    arete::input::InputAction {
+      .actionName = "horizontal",
+      .scale = -1.f
+    }
+  );
 
-  // _input.registerActionCallback("click",
-  //     arete::input::Input::ActionCallback{
-  //         .ref = "MyGame",
-  //         .func = [](arete::input::InputSource source, int sourceIndex, float value) {
-  //         // std::cout << "click" << std::endl;
-  //             return true;
-  //         }
-  //     }
-  // );
+  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_D,
+      arete::input::InputAction {
+      .actionName = "horizontal",
+      .scale = 1.f
+    }
+  );
+
+  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_W,
+    arete::input::InputAction {
+      .actionName = "vertical",
+      .scale = 1.f
+    }
+  );
+
+  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_S,
+      arete::input::InputAction {
+      .actionName = "vertical",
+      .scale = -1.f
+    }
+  );
+
+  _glfwInput.mapInputToAction(arete::input::InputKey::MOUSE_LEFT,
+    arete::input::InputAction {
+      .actionName = "click"
+    }
+  );
+
+  _glfwInput.registerActionCallback("horizontal",
+    arete::input::Input::ActionCallback {
+      .ref = "EngineActionMap",
+      .func = [](arete::input::InputSource source, int sourceIndex, float value) {
+        return true;
+      }
+    }
+  );
+
+  _glfwInput.registerActionCallback("vertical",
+    arete::input::Input::ActionCallback {
+      .ref = "EngineActionMap",
+      .func = [&](arete::input::InputSource source, int sourceIndex, float value) {
+        cam.pos += 1;
+        return true;
+      }
+    }
+  );
+
+  _glfwInput.registerActionCallback("click",
+    arete::input::Input::ActionCallback {
+      .ref = "engine",
+      .func = [](arete::input::InputSource source, int sourceIndex, float value) {
+        return true;
+      }
+    }
+  );
 
   _renderer.setup();
   _renderer.surface(_display._window);
@@ -227,11 +250,13 @@ void VulkanEngine::run()
   _mesh.indexBuffer(
     _renderer._device,
     _renderer._physicalDevice,
-    mesh);
+    mesh
+  );
   _mesh.vertexBuffer(
     _renderer._device,
     _renderer._physicalDevice,
-    mesh);
+    mesh
+  );
 
   InFlightRendering rendering(_renderer, *this);
 
@@ -242,7 +267,7 @@ void VulkanEngine::run()
 
   while(!glfwWindowShouldClose(_display._window))
   {
-    glfwPollEvents();
+    _glfwInput.processInput();
 
     rotationY = 0;
     rotationX = 0;

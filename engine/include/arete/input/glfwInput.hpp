@@ -13,8 +13,10 @@ class GlfwInput : public Input
 public:
     void setup(GLFWwindow * glfwWindow);
 
-    InputKey keyToInputKey(int key);
-    InputKey mouseButtonToInputKey(int mouseButton);
+    virtual void processInput() override;
+
+    static InputKey keyToInputKey(int key);
+    static InputKey mouseButtonToInputKey(int mouseButton);
 
     std::unordered_map<InputKey, InputDeviceState> getGamepadStateByID (int joystickId);
 

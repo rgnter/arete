@@ -118,13 +118,13 @@ std::vector<Input::ActionEvent> Input::generateActionEvent(int deviceIndex, Inpu
 	InputSource source = getInputSourceFromKey(key);
 
 	for (auto& action : actions) {
-		actionEvents.emplace_back(ActionEvent{
-			.actionName = action.actionName,
-			.source = source,
-			.sourceIndex = deviceIndex,
-			.value = newVal * action.scale,
-			});
-
+		actionEvents.emplace_back( ActionEvent {
+				.actionName = action.actionName,
+				.source = source,
+				.sourceIndex = deviceIndex,
+				.value = newVal * action.scale,
+			}
+		);
 	}
 
 	return actionEvents;

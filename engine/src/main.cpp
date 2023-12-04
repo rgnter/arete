@@ -7,12 +7,12 @@
 
 int main(int argc, char** argv)
 {
-  const auto readMeshBinary = [](const std::filesystem::path& shaderBinaryPath)
+  const auto readMeshBinary = [](const std::filesystem::path& meshBinaryPath)
   {
-    std::ifstream input(shaderBinaryPath, std::ios::binary);
+    std::ifstream input(meshBinaryPath, std::ios::binary);
     if (!input.is_open())
       throw std::runtime_error(""
-        /*std::format("Couldn't find mesh at '{}'", shaderBinaryPath.c_str())*/);
+        /*std::format("Couldn't find mesh at '{}'", meshBinaryPath.c_str())*/);
 
     std::vector<glm::f32vec3> vertices;
     std::vector<glm::u16vec3> indices;

@@ -11,32 +11,38 @@ namespace arete::input
  */
 void GlfwInput::setup(GLFWwindow * window)
 {
-  static const std::function setKeyCallback = [this](GLFWwindow* window, int key, int scancode, int action, int mods)
-  {
-    float value = 0.f;
-    switch (action) {
-      case GLFW_PRESS:
-      case GLFW_REPEAT:
-          value = 1.f;
-      break;
-      default:
-        value = 0.f;
-    }
+	glfwSetWindowUserPointer(window, this);
 
-    updateKeyboardState(keyToInputKey(key), value);
-  };
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-	  setKeyCallback(window, key, scancode, action, mods);
+		auto* input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window));
+
+		if (input)
+		{
+			float value = 0.f;
+
+			switch (action) {
+				case GLFW_PRESS:
+				case GLFW_REPEAT:
+					value = 1.f;
+				break;
+				default:
+					value = 0.f;
+			}
+
+			input->updateKeyboardState(GlfwInput::keyToInputKey(key), value);
+		}
 	});
 
-  static const std::function setMouseButtonCallback = [&](GLFWwindow* window, int button, int action, int mods)
-  {
-    updateMouseState(mouseButtonToInputKey(button), action == GLFW_PRESS ? 1.f : 0.f);
-  };
+  
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
 	{
-	  setMouseButtonCallback(window, button, action, mods);
+		auto* input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window));
+
+		if (input)
+		{
+			input->updateMouseState(mouseButtonToInputKey(button), action == GLFW_PRESS ? 1.f : 0.f);
+		}
 	});
 
 	// glfwSetJoystickCallback([](int joystickId, int event) {
@@ -58,17 +64,19 @@ void GlfwInput::setup(GLFWwindow * window)
 
 
 	// register input devices
-	registerDevice(InputDevice{
-		.type = InputDeviceType::KEYBOARD,
-		.index = 0,
-		.stateFunc = std::bind(&GlfwInput::getKeyboardState, this, std::placeholders::_1)
-		});
+	registerDevice( InputDevice {
+			.type = InputDeviceType::KEYBOARD,
+			.index = 0,
+			.stateFunc = std::bind(&GlfwInput::getKeyboardState, this, std::placeholders::_1)
+		}
+	);
 
-	registerDevice(InputDevice{
-		.type = InputDeviceType::MOUSE,
-		.index = 0,
-		.stateFunc = std::bind(&GlfwInput::getMouseState, this, std::placeholders::_1)
-		});
+	registerDevice( InputDevice {
+			.type = InputDeviceType::MOUSE,
+			.index = 0,
+			.stateFunc = std::bind(&GlfwInput::getMouseState, this, std::placeholders::_1)
+		}
+	);
 
     // for (int i = 0; i <= GLFW_JOYSTICK_LAST; i++) {
 	// 	if (glfwJoystickPresent(i)) {		
@@ -81,6 +89,13 @@ void GlfwInput::setup(GLFWwindow * window)
 	// 		);
 	// 	}
 	// }
+}
+
+void GlfwInput::processInput()
+{
+	glfwPollEvents();
+
+	Input::processInput();
 }
 
 InputKey GlfwInput::keyToInputKey(int key)
