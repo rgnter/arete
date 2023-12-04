@@ -1,4 +1,5 @@
 #include "arete/vulkan.hpp"
+#include "arete/input/glfwInput.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -152,6 +153,56 @@ void VulkanEngine::run()
     0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
 
   _display.setup(_renderer);
+
+  _input = static_cast<arete::input::Input>(arete::input::GlfwInput(_display._window));
+
+  // _input.mapInputToAction(arete::input::InputKey::KEY_A,
+  //     arete::input::InputAction{
+  //     .actionName = "strafe",
+  //     .scale = -1.f
+  //     }
+  // );
+
+  // _input.mapInputToAction(arete::input::InputKey::KEY_D,
+  //     arete::input::InputAction{
+  //     .actionName = "strafe",
+  //     .scale = 1.f
+  //     }
+  // );
+
+  // _input.mapInputToAction(arete::input::InputKey::MOUSE_LEFT,
+  //     arete::input::InputAction{
+  //     .actionName = "click"
+  //     }
+  // );
+
+  // _input.mapInputToAction(arete::input::InputKey::GAMEPAD_L_THUMB_X,
+  //     arete::input::InputAction{
+  //     .actionName = "strafe",
+  //     .scale = 1.f
+  //     }
+  // );
+
+  // _input.registerActionCallback("strafe",
+  //     arete::input::Input::ActionCallback{
+  //         .ref = "MyGame",
+  //         .func = [](arete::input::InputSource source, int sourceIndex, float value) {
+  //             // std::cout << "strafing" << std::endl;
+  //             return true;
+  //         }
+  //     }
+  // );
+
+  // _input.registerActionCallback("click",
+  //     arete::input::Input::ActionCallback{
+  //         .ref = "MyGame",
+  //         .func = [](arete::input::InputSource source, int sourceIndex, float value) {
+  //         // std::cout << "click" << std::endl;
+  //             return true;
+  //         }
+  //     }
+  // );
+
   _renderer.setup();
   _renderer.surface(_display._window);
   _renderer.physicalDevice();

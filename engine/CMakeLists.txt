@@ -3,7 +3,9 @@ add_library(engine SHARED
         src/vulkan/display.cpp
         src/vulkan/renderer.cpp
         src/vulkan/engine.cpp
-        src/engine.cpp)
+        src/engine.cpp
+        src/input/input.cpp
+        src/input/glfwInput.cpp)
 
 find_package(Vulkan REQUIRED)
 

@@ -78,6 +78,10 @@ protected:
   Map<MeshHandle, Mesh> _meshes;
 
   Map<MaterialHandle, Mesh> _meshesByMaterial;
+
+protected:
+  input::Input _input;
+  
 };
 
 } // namespace arete

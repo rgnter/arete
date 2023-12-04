@@ -2,6 +2,7 @@
 #define ARETE_CORE_HPP
 
 #include "model/model.hpp"
+#include "arete/input/input.hpp"
 
 namespace arete
 {

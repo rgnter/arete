@@ -13,6 +13,7 @@
 #include <array>
 #include <format>
 #include <vector>
+#include <optional>
 
 namespace arete
 {
