@@ -1,4 +1,8 @@
+include(cmake/resources.cmake)
+find_package(Vulkan REQUIRED)
+
 add_library(engine SHARED
+        src/hcs/spatial/spatial.cpp
         src/core.cpp
         src/vulkan/display.cpp
         src/vulkan/renderer.cpp
@@ -7,8 +11,8 @@ add_library(engine SHARED
         src/input/input.cpp
         src/input/glfwInput.cpp)
 
-find_package(Vulkan REQUIRED)
-
+target_compile_shaders(engine
+        resources/shaders)
 target_link_libraries(engine
         PUBLIC project_properties
         PUBLIC glfw glm Vulkan::Vulkan)

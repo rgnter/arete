@@ -11,7 +11,6 @@
 
 #include <string_view>
 #include <array>
-#include <format>
 #include <vector>
 #include <optional>
 
@@ -199,7 +198,6 @@ private:
    */
   void present();
 
-private:
 private:
   const VulkanRenderer& _renderer;
   const VulkanEngine& _engine;

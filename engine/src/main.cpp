@@ -3,6 +3,7 @@
 #include <arete/vulkan.hpp>
 #include <fstream>
 #include <filesystem>
+#include <format>
 
 int main(int argc, char** argv)
 {
@@ -136,66 +137,70 @@ int main(int argc, char** argv)
     });
 
   /*
-  //! Player input component.
-  //! Simple spatial translations.
-  class PlayerInputComponent
-      : arete::InputComponent
-  {
-  public:
-    void Handle2DInput(float value)
+    //! Player input component.
+    //! Controls simple spatial transformations based on inputs.
+    class PlayerInputComponent
+        : arete::hcs::InputComponent
     {
-      
-    }
+    public:
+      void OnCreate(arete::Scene& scene) override
+      {
+        _spatial = GetActor().GetComponent<arete::hcs::SpatialComponent>();
+      }
 
-    void Handle1DInput(float value, int64_t keyId) override
+      void OnDestroy(arete::Scene& scene) override
+      {
+      }
+
+      void HandleInput(float value, arete::InputKey key) override
+      {
+        glm::vec3 axis;
+        if (key == arete::InputKey::Keyboard_Right)
+          axis = {1, 0, 0};
+        else if (key == arete::InputKey::Keyboard_Left)
+          axis = {-1, 0, 0};
+        else if (key == arete::InputKey::Keyboard_Upward)
+          axis = {0, 0, 1};
+        else if (key == arete::InputKey::Keyboard_Downward)
+          axis = {0, 0, -1};
+
+        _spatial.translate(axis * value);
+      }
+
+    private:
+      arete::Ref<arete::hcs::SpatialComponent> _spatial;
+
+    };
+
+    //! Player actor.
+    class Player
+        : arete::Actor
     {
-      glm::vec3 axis;
-      if (value == INPUT_RIGHT)
-        axis = {1, 0, 0};
-      if (value == INPUT_LEFT)
-        axis = {-1, 0, 0};
-      if (value == INPUT_FORWARD)
-        axis = {0, 0, 1};
-      if (value == INPUT_BACKWARD)
-        axis = {0, 0, -1};
+    public:
+      void OnCreate(Scene& scene) override
+      {
+        // Create the mesh component.
+        _mesh = CreateComponent<arte::MeshComponent>(
+          arete::assets::find("primitives/cube.fbx"),
+          arete::assets::find("primitives/materials/cube.mat"));
 
-      _spatial.translate(axis * value);
-    }
+        // Create the spatial component.
+        _spatial = CreateComponent<arete::SpatialComponent>();
 
-  private:
-    arete::SpatialComponent _spatial;
+        // Create the input component.
+        _input = CreateComponent<PlayerInputComponent>(_spatial);
+      }
 
-  };
+      void OnDestroy() override
+      {
+      }
 
-  //! Player actor.
-  class Player
-      : arete::Actor
-  {
-  public:
-    void OnCreate(Scene& scene) override
-    {
-      // Create the mesh component.
-      _mesh = CreateComponent<arte::MeshComponent>(
-        arete::assets::find("primitives/cube.fbx"),
-        arete::assets::find("primitives/materials/cube.mat"));
+    private:
+      arete::Ref<arete::hcs::MeshComponent> _mesh;
+      arete::Ref<arete::hcs::SpatialComponent> _spatial;
+      arete::Ref<arete::hcs::InputComponent> _input;
+    };*/
 
-      // Create the spatial component.
-      _spatial = CreateComponent<arete::SpatialComponent>();
-
-      // Create the input component.
-      _input = CreateComponent<PlayerInputComponent>(_spatial);
-    }
-
-    void OnDestroy() override
-    {
-    }
-
-  private:
-    arete::Ref<arete::MeshComponent> _mesh;
-    arete::Ref<arete::SpatialComponent> _spatial;
-    arete::Ref<arete::InputComponent> _input;
-  };
-*/
 
   engine.run();
 }

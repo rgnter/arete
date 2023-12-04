@@ -4,33 +4,15 @@
 #include "model/model.hpp"
 #include "arete/input/input.hpp"
 
+#include <memory>
+#include <utility>
+
 namespace arete
 {
 
-//! Actor handle.
-using ActorHandle = uint32_t;
-
-class Actor
-{
-public:
-  void CreateComponent();
-
-public:
-  //!
-  virtual void OnCreate();
-
-  //!
-  virtual void OnDestroy();
-};
-
-
-class System
-{
-
-public:
-  virtual void Tick();
-
-};
+//! Simple reference wrapper.
+template<class T>
+using Ref = std::reference_wrapper<T>;
 
 } // namespace arete
 
