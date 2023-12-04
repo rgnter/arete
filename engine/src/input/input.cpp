@@ -142,7 +142,7 @@ void Input::updateKeyboardState(InputKey key, float value)
 }
 void Input::updateMouseState(InputKey button, float value)
 {
-	_mouseState[button].value = value;
+  _mouseState[button].value = value;
 }
 
 } // namespace arete::input

@@ -7,6 +7,8 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
 
+#include <arete/input/glfwInput.hpp>
+
 #include <glm/glm.hpp>
 
 #include <string_view>
@@ -227,6 +229,10 @@ private:
 class VulkanEngine :
     public arete::Engine
 {
+public:
+  VulkanEngine() : Engine(_glfwInput)
+  {
+  }
 
 public:
   arete::MeshHandle createMesh(
@@ -248,6 +254,9 @@ public:
 
   VulkanRenderer _renderer;
   Display _display;
+
+private:
+  arete::input::GlfwInput _glfwInput;
 };
 
 } // namespace vulkan

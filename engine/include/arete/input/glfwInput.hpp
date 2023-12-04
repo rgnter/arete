@@ -11,7 +11,7 @@ namespace arete::input
 class GlfwInput : public Input
 {
 public:
-    GlfwInput(GLFWwindow * glfwWindow);
+    void setup(GLFWwindow * glfwWindow);
 
     InputKey keyToInputKey(int key);
     InputKey mouseButtonToInputKey(int mouseButton);

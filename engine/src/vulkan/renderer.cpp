@@ -600,7 +600,7 @@ void VulkanRenderer::setup()
   _extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   _extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
   _layers.emplace_back("VK_LAYER_KHRONOS_validation");
-  _layers.emplace_back("VK_LAYER_RENDERDOC_Capture");
+  //_layers.emplace_back("VK_LAYER_RENDERDOC_Capture");
 
   const vk::ApplicationInfo applicationInfo{
     .pApplicationName = "Hello World",

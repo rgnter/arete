@@ -94,7 +94,6 @@ struct InputDevice {
 
 class Input
 {
-
 public:
 	using ActionCallbackFunc = std::function<bool(InputSource, int, float)>;
 
@@ -110,9 +109,6 @@ public:
 		float value;
 	};
 
-
-public:
-
 	void registerDevice(const InputDevice& device);
 	void removeDevice(InputDeviceType type, int index);
 
@@ -122,15 +118,11 @@ public:
 	void mapInputToAction(InputKey key, const InputAction& action);
 	void unmapInputFromAction(InputKey key, const std::string& actionName);
 
-
 	void processInput();
-
-
 
 	std::unordered_map<InputKey, InputDeviceState> getKeyboardState		(int index) { return _keyboardState			; }
 	std::unordered_map<InputKey, InputDeviceState> getMouseState		(int index) { return _mouseState			; }
 	std::unordered_map<InputKey, InputDeviceState> getGamepadStateById	(int joystickId);
-
 
 protected:
 	std::vector<ActionEvent> generateActionEvent(int deviceIndex, InputKey key, float newVal);
@@ -139,18 +131,16 @@ protected:
 	void updateKeyboardState(InputKey key, float value);
 	void updateMouseState(InputKey button, float value);
 
-	
 private:
-
-	std::unordered_map<InputKey, std::vector<InputAction>>	_inputActionMapping{};
-	std::unordered_map<std::string, std::vector<ActionCallback>>	_actionCallbacks{};
+	std::unordered_map<InputKey, std::vector<InputAction>>	_inputActionMapping;
+	std::unordered_map<std::string, std::vector<ActionCallback>>	_actionCallbacks;
 
 	std::vector<InputDevice>										_devices;
 
-	std::unordered_map<InputKey, InputDeviceState>							_keyboardState{};
-	std::unordered_map<InputKey, InputDeviceState>							_mouseState{};
+	std::unordered_map<InputKey, InputDeviceState>							_keyboardState;
+	std::unordered_map<InputKey, InputDeviceState>							_mouseState;
 
-	std::unordered_map<int, std::unordered_map<InputKey, InputDeviceState>> _gamepadState{};
+	std::unordered_map<int, std::unordered_map<InputKey, InputDeviceState>> _gamepadState;
 };
 
 } // namespace arete::input

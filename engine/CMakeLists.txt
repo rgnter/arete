@@ -1,7 +1,7 @@
 include(cmake/resources.cmake)
 find_package(Vulkan REQUIRED)
 
-add_library(engine SHARED
+add_library(engine STATIC
         src/hcs/spatial/spatial.cpp
         src/core.cpp
         src/vulkan/display.cpp
@@ -10,6 +10,9 @@ add_library(engine SHARED
         src/engine.cpp
         src/input/input.cpp
         src/input/glfwInput.cpp)
+
+set_target_properties(engine PROPERTIES
+        POSITION_INDEPENDENT_CODE ON)
 
 target_compile_shaders(engine
         resources/shaders)

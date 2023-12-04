@@ -154,7 +154,7 @@ void VulkanEngine::run()
 
   _display.setup(_renderer);
 
-  _input = static_cast<arete::input::Input>(arete::input::GlfwInput(_display._window));
+  _glfwInput.setup(_display._window);
 
   // _input.mapInputToAction(arete::input::InputKey::KEY_A,
   //     arete::input::InputAction{

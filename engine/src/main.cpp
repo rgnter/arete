@@ -11,8 +11,8 @@ int main(int argc, char** argv)
   {
     std::ifstream input(shaderBinaryPath, std::ios::binary);
     if (!input.is_open())
-      throw std::runtime_error(
-        std::format("Couldn't find mesh at '{}'", shaderBinaryPath.c_str()));
+      throw std::runtime_error(""
+        /*std::format("Couldn't find mesh at '{}'", shaderBinaryPath.c_str())*/);
 
     std::vector<glm::f32vec3> vertices;
     std::vector<glm::u16vec3> indices;
@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     const auto size = std::filesystem::file_size(shaderBinaryPath);
     std::ifstream input(shaderBinaryPath, std::ios::binary);
     if (input.bad())
-      throw std::runtime_error(
-        std::format("Couldn't find shader at '{}'", shaderBinaryPath.c_str()));
+      throw std::runtime_error(""
+        /*std::format("Couldn't find shader at '{}'", shaderBinaryPath.c_str())*/);
 
     std::vector<uint8_t> buffer(size);
     input.read(reinterpret_cast<char*>(buffer.data()), size);
@@ -55,16 +55,16 @@ int main(int argc, char** argv)
 
   auto vertexShader = engine.createShader(
     arete::Shader::Stage::Vertex,
-    readSpvBinary("resources/cube-vert.spv"));
+    readSpvBinary("resources/shaders/cube-vertex.spv"));
   auto fragmentShader = engine.createShader(
     arete::Shader::Stage::Fragment,
-    readSpvBinary("resources/cube-frag.spv"));
+    readSpvBinary("resources/shaders/cube-fragment.spv"));
 
   auto material = engine.createMaterial(
     vertexShader,
     fragmentShader);
 
-  auto data = readMeshBinary("resources/cube.obj");
+  //auto data = readMeshBinary("resources/cube.obj");
   auto mesh = engine.createMesh(
     material,
     arete::Mesh::Vertices{

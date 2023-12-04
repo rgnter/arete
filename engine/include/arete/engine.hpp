@@ -19,6 +19,10 @@ public:
   template<typename Key, typename Value>
   using Map = std::unordered_map<Key, Value>;
 
+  Engine(Ref<input::Input> input)
+    : _input(input)
+  {}
+
   //! Creates shader.
   //! @param stage Shader stage.
   //! @param source Shader source.
@@ -80,7 +84,7 @@ protected:
   Map<MaterialHandle, Mesh> _meshesByMaterial;
 
 protected:
-  input::Input _input;
+  Ref<input::Input> _input;
   
 };
 

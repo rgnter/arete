@@ -5,38 +5,39 @@
 namespace arete::input
 {
 
-GlfwInput::GlfwInput(GLFWwindow * window)
+/**
+ * \brief 
+ * \param window 
+ */
+void GlfwInput::setup(GLFWwindow * window)
 {
-    // set user pointers
-	glfwSetWindowUserPointer(window, this);
+  static const std::function setKeyCallback = [this](GLFWwindow* window, int key, int scancode, int action, int mods)
+  {
+    float value = 0.f;
+    switch (action) {
+      case GLFW_PRESS:
+      case GLFW_REPEAT:
+          value = 1.f;
+      break;
+      default:
+        value = 0.f;
+    }
 
-	
+    updateKeyboardState(keyToInputKey(key), value);
+  };
+	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+	{
+	  setKeyCallback(window, key, scancode, action, mods);
+	});
 
-	// register callbacks
-	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-            auto* input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window));
-
-            float value = 0.f;
-            switch (action) {
-                case GLFW_PRESS:
-                case GLFW_REPEAT:
-                    value = 1.f;
-                break;
-                default:
-                    value = 0.f;
-            }
-
-            input->updateKeyboardState(input->keyToInputKey(key), value);
-		}
-	);
-
-	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
-		auto* input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window));
-		if (input) {
-			input->updateMouseState(input->mouseButtonToInputKey(button), action == GLFW_PRESS ? 1.f : 0.f);
-		}
-		}
-	);
+  static const std::function setMouseButtonCallback = [&](GLFWwindow* window, int button, int action, int mods)
+  {
+    updateMouseState(mouseButtonToInputKey(button), action == GLFW_PRESS ? 1.f : 0.f);
+  };
+	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
+	{
+	  setMouseButtonCallback(window, button, action, mods);
+	});
 
 	// glfwSetJoystickCallback([](int joystickId, int event) {
 	// 	if (this) {
