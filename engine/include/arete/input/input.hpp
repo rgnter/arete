@@ -95,8 +95,17 @@ struct InputDevice {
 class Input
 {
 public:
+
 	using ActionCallbackFunc = std::function<bool(InputSource, int, float)>;
 
+public:
+  //! Default contructor.
+  Input() = default;
+
+  //! Default destructor.
+  virtual ~Input() = default;
+
+public:
 	struct ActionCallback {
 		std::string ref;
 		ActionCallbackFunc func;
