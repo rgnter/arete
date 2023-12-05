@@ -406,6 +406,7 @@ void VulkanRenderer::pipeline()
 
   // Push constants
   vk::PushConstantRange pushConstantRange {
+    .stageFlags = vk::ShaderStageFlagBits::eVertex,
     .offset = 0,
     .size = sizeof(arete::PushConstants)
   };

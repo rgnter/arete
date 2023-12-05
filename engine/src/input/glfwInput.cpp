@@ -10,33 +10,36 @@ void GlfwInput::setup(GLFWwindow * window)
 
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
-		float value = 0.f;
-		switch (action) {
-		case GLFW_PRESS:
-		case GLFW_REPEAT:
-			value = 1.f;
-		break;
-		default:
-			value = 0.f;
-		}
+		// if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
+		// {
+			float value = 0.f;
+			switch (action) {
+				case GLFW_PRESS:
+				case GLFW_REPEAT:
+					value = 1.f;
+				break;
+				default:
+					value = 0.f;
+			}
 
-		InputDevice inputDevice;
-		if (Input::tryGetInputDevice(InputDeviceType::KEYBOARD, 0, inputDevice))
-		{
-			inputDevice.addToNewStateBuffer(GlfwInput::keyToInputKey(key), InputDeviceState(value));
-		}
+			Input::tryAddToNewStateBufferOfDevice(
+				InputDeviceType::KEYBOARD, 0,
+				GlfwInput::keyToInputKey(key),
+				InputDeviceState(value)
+			);
+		// }
 	});
 
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
 	{
-        InputDevice inputDevice;
-        if (Input::tryGetInputDevice(InputDeviceType::MOUSE, 0, inputDevice))
-        {
-            inputDevice.addToNewStateBuffer(
-                GlfwInput::mouseButtonToInputKey(button),
-                InputDeviceState(action == GLFW_PRESS ? 1.f : 0.f)
-            );
-        }
+		// if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
+		// {
+			Input::tryAddToNewStateBufferOfDevice(
+				InputDeviceType::MOUSE, 0,
+				GlfwInput::mouseButtonToInputKey(button),
+				InputDeviceState(action == GLFW_PRESS ? 1.f : 0.f)
+			);
+		// }
 	});
 
 	// glfwSetJoystickCallback([](int joystickId, int event) {
@@ -73,6 +76,15 @@ void GlfwInput::setup(GLFWwindow * window)
 	// 	}
 	// }
 }
+
+
+void GlfwInput::processInput()
+{
+	glfwPollEvents();
+
+	Input::processInput();
+}
+
 
 InputKey GlfwInput::keyToInputKey(int key)
 {

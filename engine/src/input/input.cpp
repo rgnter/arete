@@ -51,26 +51,73 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 
 // Input Action - Input Action registered to devices callbacks
 
-InputActionBase::InputActionBase(const std::string & Name)
-{
-    name = Name;
-}
-
-template<typename T>
-T InputActionBase::CallbackContext::readValue()
-{
-    return *dynamic_cast<T*>(data);
-}
-
 void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisMappings)
 {
-    for (auto & axisMapping : axisMappings)
+    _inputMappings = axisMappings;
+    for (auto & inputMapping : _inputMappings)
     {
-        Input::InputDevice inputDevice;
-        if (Input::tryGetInputDevice(getInputDeviceTypeFromKey(axisMapping.inputKey), 0, inputDevice))
-        {
-            inputDevice.registerListener(axisMapping.inputKey, [](float){});
-        }
+        Input::tryRegisterListenerOfDevice(
+            getInputDeviceTypeFromKey(inputMapping.inputKey), 0, inputMapping.inputKey, 
+            [&](float value) {
+                // _value == glm::vec3(0, 0, 0);
+                if (value == 1)
+                {
+                    _activeInputs++;
+
+                    if (!_started)
+                    {
+                        _value = glm::vec3(0);
+                        _value += inputMapping.axis;
+                        if (started)
+                        {
+                            CallbackContext ctx;
+                            started(ctx, _value);
+                        }
+                        _started = true;
+                    }
+
+                    if (performed)
+                    {
+                        CallbackContext ctx;
+                        performed(ctx, _value);
+                    }
+                    
+                }
+                else
+                {
+                    _activeInputs--;
+
+                    _value -= inputMapping.axis;
+
+                    if (!_started)
+                    {
+                        if (started)
+                        {
+                            CallbackContext ctx;
+                            started(ctx, _value);
+                        }
+                        _started = true;
+                    }
+
+                    if (performed)
+                    {
+                        CallbackContext ctx;
+                        performed(ctx, _value);
+                    }
+
+                    if (_activeInputs == 0)
+                    {
+                        _value = glm::vec3(0);
+                        if (canceled)
+                        {
+                            CallbackContext ctx;
+                            canceled(ctx, _value);
+                        }
+                        _started = false;
+                    }
+                }
+            }
+        );
     }
 }
 
@@ -78,11 +125,39 @@ void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
 {
     for (auto & buttonMapping : buttonMappings)
     {
-        Input::InputDevice inputDevice;
-        if (Input::tryGetInputDevice(getInputDeviceTypeFromKey(buttonMapping.inputKey), 0, inputDevice))
-        {
-            inputDevice.registerListener(buttonMapping.inputKey, [](float){});
-        }
+        Input::tryRegisterListenerOfDevice(
+            getInputDeviceTypeFromKey(buttonMapping.inputKey), 0, buttonMapping.inputKey,
+            [&](float value) {
+                if (value == 1)
+                {
+                    if (!_started)
+                    {
+                        CallbackContext startedCtx;
+                        started(startedCtx, true);
+                        _started = true;
+                    }
+
+                    CallbackContext performedCtx;
+                    performed(performedCtx, true);
+                }
+                else
+                {
+                    if (!_started)
+                    {
+                        CallbackContext startedCtx;
+                        started(startedCtx, true);
+                        _started = true;
+                    }
+
+                    CallbackContext performedCtx;
+                    performed(performedCtx, true);
+                    
+                    CallbackContext canceledCtx;
+                    canceled(canceledCtx, false);
+                    _started = false;
+                }
+            }
+        );
     } 
 }
 
@@ -205,9 +280,12 @@ void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
         InputKey newInputKey = entry.first;
         float newValue = entry.second.value;
 
-        if (_currentState.contains(newInputKey) && _currentState[newInputKey].value == newValue)
+        if (_currentState.contains(newInputKey))
         {
-            continue;
+            if (_currentState[newInputKey].value == newValue)
+            {
+                continue;
+            }
         }
 
         capture.emplace(newInputKey, newValue);
@@ -218,6 +296,14 @@ void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
         else
         {
             _currentState.erase(newInputKey);
+        }
+
+        if (_onStateChanged.contains(newInputKey))
+        {
+            for (const auto & callback : _onStateChanged[newInputKey])
+            {
+                callback(newValue);
+            }
         }
     }
     _newStateBuffer.clear();
@@ -266,11 +352,21 @@ void Input::processInput()
 }
 
 
-bool Input::tryGetInputDevice(InputDeviceType type, int index, InputDevice & inputDevice)
+bool Input::tryAddToNewStateBufferOfDevice(InputDeviceType type, int index, InputKey key, InputDeviceState value)
 {
     if (containsDevice(type, index))
     {
-        inputDevice = _devices[type][index];
+        _devices[type][index].addToNewStateBuffer(key, value);
+        return true;
+    }
+    return false;
+}
+
+bool Input::tryRegisterListenerOfDevice(InputDeviceType type, int index, InputKey key, Callback callback)
+{
+    if (containsDevice(type, index))
+    {
+        _devices[type][index].registerListener(key, callback);
         return true;
     }
     return false;

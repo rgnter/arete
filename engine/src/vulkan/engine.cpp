@@ -169,36 +169,36 @@ void VulkanEngine::run()
     {
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_W,
-        .axis = arete::input::Axis::Forward
+        .axis = glm::vec3(0, 0, 1)
       },
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_A,
-        .axis = arete::input::Axis::Left
+        .axis = glm::vec3(-1, 0, 0)
       },
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_S,
-        .axis = arete::input::Axis::Back
+        .axis = glm::vec3(0, 0, -1)
       },
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_D,
-        .axis = arete::input::Axis::Right
+        .axis = glm::vec3(1, 0, 0)
       },
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_E,
-        .axis = arete::input::Axis::Up
+        .axis = glm::vec3(0, 1, 0)
       },
       arete::input::InputMapping<glm::vec3> {
         .inputKey = arete::input::InputKey::KEY_Q,
-        .axis = arete::input::Axis::Down
+        .axis = glm::vec3(0, -1, 0)
       }
     }
   );
 
   // link behaviour to action callback
-  // moveAction.performed = [&](const arete::input::InputAction::CallbackContext & ctx){
-  //   glm::vec3 inputValue = ctx.readValue<glm::vec3>();
-  //   cam.pos += inputValue * cam.rot;
-  // };
+  glm::vec3 cameraInput(0);
+  moveAction.performed = [&](const auto & event, const auto value) {
+    cameraInput = value;
+  };
 
   _renderer.setup();
   _renderer.surface(_display._window);
@@ -243,32 +243,38 @@ void VulkanEngine::run()
   {
     _glfwInput.processInput();
 
-    rotationY = 0;
-    rotationX = 0;
+    // rotationY = 0;
+    // rotationX = 0;
 
-    if(glfwGetKey(_display._window, GLFW_KEY_RIGHT) == GLFW_TRUE)
-    {
-      rotationY = -glm::radians<float>(1);
-    }
-    else if(glfwGetKey(_display._window, GLFW_KEY_LEFT) == GLFW_TRUE)
-    {
-      rotationY = glm::radians<float>(1);
-    }
+    // if(glfwGetKey(_display._window, GLFW_KEY_RIGHT) == GLFW_TRUE)
+    // {
+    //   rotationY = -glm::radians<float>(1);
+    // }
+    // else if(glfwGetKey(_display._window, GLFW_KEY_LEFT) == GLFW_TRUE)
+    // {
+    //   rotationY = glm::radians<float>(1);
+    // }
 
-    if(glfwGetKey(_display._window, GLFW_KEY_UP) == GLFW_TRUE)
-    {
-      rotationX = -glm::radians<float>(1);
-    }
-    else if(glfwGetKey(_display._window, GLFW_KEY_DOWN) == GLFW_TRUE)
-    {
-      rotationX = glm::radians<float>(1);
-    }
+    // if(glfwGetKey(_display._window, GLFW_KEY_UP) == GLFW_TRUE)
+    // {
+    //   rotationX = -glm::radians<float>(1);
+    // }
+    // else if(glfwGetKey(_display._window, GLFW_KEY_DOWN) == GLFW_TRUE)
+    // {
+    //   rotationX = glm::radians<float>(1);
+    // }
 
-    if (rotationY)
-      _pushConstants.model = glm::rotate(_pushConstants.model, rotationY, {0,1,0});
-    if (rotationX)
-      _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
+    // if (rotationY)
+    //   _pushConstants.model = glm::rotate(_pushConstants.model, rotationY, {0,1,0});
+    // if (rotationX)
+    //   _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
 
+    cam.pos += (cameraInput * cam.rot) * 0.01f; // deltaTime
+    _pushConstants.view = glm::lookAt(
+      cam.pos,
+      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+      glm::vec3(0, 1, 0) * cam.rot
+    );
 
     rendering.draw();
 

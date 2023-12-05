@@ -68,15 +68,6 @@ enum class InputDeviceType {
 
 // Input Mapping
 
-enum Axis {
-    Forward,
-    Back,
-    Right,
-    Left,
-    Up,
-    Down
-};
-
 template<typename T>
 struct InputMapping;
 
@@ -88,50 +79,49 @@ struct InputMapping<bool> {
 template<>
 struct InputMapping<glm::vec3> {
     InputKey inputKey;
-    Axis axis;
+    glm::vec3 axis;
 };
 
 
 
 // ActionMap / InputAction
 
-class InputActionBase
+template<typename T>
+class InputAction
 {
 public:
-    InputActionBase() {}
-    InputActionBase(const std::string & Name);
-
     struct CallbackContext {
-        
-        template<typename T>
-        T readValue();
 
-    private:
-        void * data;
     };
 
-    using ActionCallback = std::function<void(const CallbackContext&)>;
+    InputAction() {}
+    InputAction(const std::string & Name) : name(Name) {}
 
-    ActionCallback started;
-    ActionCallback performed;
-    ActionCallback canceled;
-
-    std::string name;
-};
-
-template<typename T>
-class InputAction : public InputActionBase
-{
-public:
-    InputAction() : InputActionBase() {}
-    InputAction(const std::string & Name) : InputActionBase(Name) {}
-
+    //! MapInput Maps input to device callbacks based on input mapping parameter
+    //! @param inputMappings mapping of input for this action
     void mapInput(
         std::vector<InputMapping<T>> inputMappings
     );
 
-    T data;
+    template<typename T>
+    using ActionCallback = std::function<void(CallbackContext&, T)>;
+
+    ActionCallback<T> started;
+    ActionCallback<T> performed;
+    ActionCallback<T> canceled;
+
+    std::string name;
+
+    
+protected:
+    T _value;
+
+    std::vector<InputMapping<T>> _inputMappings;
+
+    bool _started = false;
+    int _activeInputs = 0;
 };
+
 
 class ActionMap
 {
@@ -217,11 +207,11 @@ public:
     static void registerDevice(const InputDevice& device);
 	static void removeDevice(InputDeviceType type, int index);
 
-
-    void processInput();
+    virtual void processInput();
 
 protected:
-    static bool tryGetInputDevice(InputDeviceType type, int index, InputDevice & inputDevice);
+    static bool tryAddToNewStateBufferOfDevice(InputDeviceType type, int index, InputKey key, InputDeviceState value);
+    static bool tryRegisterListenerOfDevice(InputDeviceType type, int index, InputKey key, Callback callback);
 
 private:
     static bool containsDevice(InputDeviceType deviceType, int deviceIndex);
