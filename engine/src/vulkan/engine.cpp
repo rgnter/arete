@@ -163,68 +163,42 @@ void VulkanEngine::run()
 
   // action.AddKey(Key, )
 
+  // const std::string moveActionName = "Move";
+  // arete::input::InputAction<glm::vec3> moveAction { .name = moveActionName };
+  // moveAction.mapAxis(
+  //   {
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_W,
+  //       .axis = arete::input::Axis::Forward
+  //     },
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_A,
+  //       .axis = arete::input::Axis::Left
+  //     },
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_S,
+  //       .axis = arete::input::Axis::Back
+  //     },
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_D,
+  //       .axis = arete::input::Axis::Right
+  //     },
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_E,
+  //       .axis = arete::input::Axis::Up
+  //     },
+  //     arete::input::AxisMapping {
+  //       .inputKey = arete::input::InputKey::KEY_Q,
+  //       .axis = arete::input::Axis::Down
+  //     }
+  //   }
+  // );
 
-  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_A,
-    arete::input::InputAction {
-      .actionName = "horizontal",
-      .scale = -1.f
-    }
-  );
-
-  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_D,
-      arete::input::InputAction {
-      .actionName = "horizontal",
-      .scale = 1.f
-    }
-  );
-
-  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_W,
-    arete::input::InputAction {
-      .actionName = "vertical",
-      .scale = 1.f
-    }
-  );
-
-  _glfwInput.mapInputToAction(arete::input::InputKey::KEY_S,
-      arete::input::InputAction {
-      .actionName = "vertical",
-      .scale = -1.f
-    }
-  );
-
-  _glfwInput.mapInputToAction(arete::input::InputKey::MOUSE_LEFT,
-    arete::input::InputAction {
-      .actionName = "click"
-    }
-  );
-
-  _glfwInput.registerActionCallback("horizontal",
-    arete::input::Input::ActionCallback {
-      .ref = "EngineActionMap",
-      .func = [](arete::input::InputSource source, int sourceIndex, float value) {
-        return true;
-      }
-    }
-  );
-
-  _glfwInput.registerActionCallback("vertical",
-    arete::input::Input::ActionCallback {
-      .ref = "EngineActionMap",
-      .func = [&](arete::input::InputSource source, int sourceIndex, float value) {
-        cam.pos += 1;
-        return true;
-      }
-    }
-  );
-
-  _glfwInput.registerActionCallback("click",
-    arete::input::Input::ActionCallback {
-      .ref = "engine",
-      .func = [](arete::input::InputSource source, int sourceIndex, float value) {
-        return true;
-      }
-    }
-  );
+  // link behaviour to action callback
+  // moveAction.performed = [&](const arete::input::InputAction::CallbackContext & ctx){
+  //   glm::vec3 inputValue = ctx.readValue<glm::vec3>();
+  //   cam.pos += inputValue * cam.rot;
+  // };
 
   _renderer.setup();
   _renderer.surface(_display._window);

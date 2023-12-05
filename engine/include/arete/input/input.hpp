@@ -1,18 +1,14 @@
 #pragma once
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
-#include <glm/glm.hpp>
-
-#include <unordered_map>
-#include <unordered_set>
-#include <functional>
 #include <vector>
+#include <functional>
 #include <string>
 
-namespace arete::input
-{
+#include <glm/vec3.hpp>
+
+namespace arete::input {
+
+// Common data
 
 enum class InputKey {
 	UNKNOWN,
@@ -25,6 +21,7 @@ enum class InputKey {
 	KEY_E,
 	KEY_S,
 	KEY_W,
+	KEY_Q,
 
 	// MOUSE
 	MOUSE_POS_X,
@@ -59,99 +56,179 @@ enum class InputKey {
 	GAMEPAD_DPAD_RIGHT,
 };
 
-enum class InputSource {
-	UNKNOWN,
-	KEYBOARD,
-	MOUSE,
-	GAMEPAD
-};
-
-struct InputAction {
-	std::string actionName { "" };
-	float scale { 1.f };
-};
-
-InputSource getInputSourceFromKey(InputKey key);
-
 enum class InputDeviceType {
+    UNKNOWN,
+    
 	KEYBOARD,
 	MOUSE,
 	GAMEPAD
 };
 
-struct InputDeviceState {
-	float value { -99.f };
+
+
+// Action Map / Input Action
+
+enum Axis {
+    Forward,
+    Back,
+    Right,
+    Left,
+    Up,
+    Down
 };
 
-using InputDeviceStateCallbackFunc = std::function<std::unordered_map<InputKey, InputDeviceState>(int)>;
+template<typename T>
+struct InputMapping;
 
-struct InputDevice {
-	InputDeviceType type;
-	int index;
-	std::unordered_map<InputKey, InputDeviceState> currentState;
-	InputDeviceStateCallbackFunc stateFunc;
+template<>
+struct InputMapping<bool> {
+    InputKey inputKey;
 };
+
+template<>
+struct InputMapping<glm::vec3> {
+    InputKey inputKey;
+    Axis axis;
+};
+
+template<typename T>
+class InputAction
+{
+
+public:
+    struct CallbackContext {
+        T t;
+    };
+
+    using ActionCallback = std::function<void(const CallbackContext&)>;
+
+    ActionCallback started;
+    ActionCallback performed;
+    ActionCallback canceled;
+
+    std::string name;
+};
+template<>
+class InputAction<glm::vec3>
+{
+
+public:
+    //! Maps action.
+    //! @param axisMapping Multiple axis mappings.
+    void mapInput(
+        std::vector<InputMapping<glm::vec3>> axisMappings
+    );
+
+};
+
+template<>
+class InputAction<bool>
+{
+
+public:
+    //! Maps action.
+    //! @param axisMapping Multiple axis mappings.
+    void mapInput(
+        std::vector<InputMapping<bool>> buttonMappings
+    );
+
+};
+
+
+class ActionMap {
+
+public:
+    template<typename T>
+    using Mapping = std::unordered_map<std::string, InputAction<T>>;
+
+    template<typename T>
+    void mapInput(
+        const std::string & actionName,
+        std::vector<InputMapping<T>> inputMappings
+    );
+    template<typename T>
+    void mapInput(
+        const std::string & actionName,
+        InputMapping<T> inputMapping
+    );
+
+    template<typename T>
+    bool getOrAddAction(const std::string & actionName, InputAction<T> & inputAction);
+    template<typename T>
+    bool getAction(const std::string & actionName, InputAction<T> & inputAction);
+
+private:
+    Mapping<bool> _boolInputActions;
+    Mapping<glm::vec3> _vectorInputActions;
+
+};
+
+
+
+// Input / Input Device
+
+static InputDeviceType getInputDeviceTypeFromKey(InputKey key);
 
 class Input
 {
-public:
-
-	using ActionCallbackFunc = std::function<bool(InputSource, int, float)>;
-
-public:
-  //! Default contructor.
-  Input() = default;
-
-  //! Default destructor.
-  virtual ~Input() = default;
+friend InputAction<glm::vec3>;
+friend InputAction<bool>;
 
 public:
-	struct ActionCallback {
-		std::string ref;
-		ActionCallbackFunc func;
-	};
+    struct InputDeviceState {
+        float value { -99.f };
+    };
+
+    using Callback = std::function<void(float)>;
+    using CallbackBank = std::vector<Callback>;
+    using CallbackBankHandle = CallbackBank::const_iterator;
+
+    struct InputDevice {
+        using DeviceStateMap = std::unordered_map<InputKey, InputDeviceState>;
+
+        InputDevice();
+        InputDevice(InputDeviceType Type, int Index);
+
+        InputDeviceType type;
+        int index;
+
+        CallbackBankHandle registerListener(
+            InputKey inputKey,
+            Callback callback
+        );
+
+        void unregisterListener(
+            InputKey inputKey,
+            CallbackBankHandle handle
+        );
+
+        void addToNewStateBuffer(InputKey key, InputDeviceState state);
+        void pushAndCapture(DeviceStateMap & capture);
+        
+    private:
+        std::unordered_map<InputKey, CallbackBank> _onStateChanged;
+
+        std::vector<std::pair<InputKey, InputDeviceState>> _newStateBuffer;
+        DeviceStateMap _currentState;
+    };
+
+    using DeviceIndex = int;
+    using DeviceMap = std::unordered_map<InputDeviceType, std::unordered_map<DeviceIndex, InputDevice>>;
+
+    static void registerDevice(const InputDevice& device);
+	static void removeDevice(InputDeviceType type, int index);
 
 
-
-	void registerDevice(const InputDevice& device);
-	void removeDevice(InputDeviceType type, int index);
-
-	void registerActionCallback(const std::string& actionName, const ActionCallback& callback);
-	void removeActionCallback(const std::string& actionName, const std::string& callbackRef);
-
-	void mapInputToAction(InputKey key, const InputAction& action);
-	void unmapInputFromAction(InputKey key, const std::string& actionName);
-
-	virtual void processInput();
-
-	std::unordered_map<InputKey, InputDeviceState> getKeyboardState (int index) { return _keyboardState; }
-	std::unordered_map<InputKey, InputDeviceState> getMouseState (int index) { return _mouseState; }
-	std::unordered_map<InputKey, InputDeviceState> getGamepadStateById (int joystickId);
+    void processInput();
 
 protected:
-	struct ActionEvent {
-		std::string actionName;
-		InputSource source;
-		int sourceIndex;
-		float value;
-	};
-
-	std::vector<ActionEvent> generateActionEvent(int deviceIndex, InputKey key, float newVal);
-	void propagateActionEvent(ActionEvent event);
-
-	void updateKeyboardState(InputKey key, float value);
-	void updateMouseState(InputKey button, float value);
+    static bool tryGetInputDevice(InputDeviceType type, int index, InputDevice & inputDevice);
 
 private:
-	std::unordered_map<InputKey, std::vector<InputAction>> _inputActionMapping;
-	std::unordered_map<std::string, std::vector<ActionCallback>> _actionCallbacks;
+    static bool containsDevice(InputDeviceType deviceType, int deviceIndex);
 
-	std::vector<InputDevice> _devices;
-
-	std::unordered_map<InputKey, InputDeviceState> _keyboardState;
-	std::unordered_map<InputKey, InputDeviceState> _mouseState;
-
-	std::unordered_map<int, std::unordered_map<InputKey, InputDeviceState>> _gamepadState;
+    static DeviceMap _devices;
 };
+
 
 } // namespace arete::input
