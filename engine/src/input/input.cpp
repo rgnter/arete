@@ -51,6 +51,17 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 
 // Input Action - Input Action registered to devices callbacks
 
+InputActionBase::InputActionBase(const std::string & Name)
+{
+    name = Name;
+}
+
+template<typename T>
+T InputActionBase::CallbackContext::readValue()
+{
+    return *dynamic_cast<T*>(data);
+}
+
 void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisMappings)
 {
     for (auto & axisMapping : axisMappings)
@@ -61,7 +72,6 @@ void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisM
             inputDevice.registerListener(axisMapping.inputKey, [](float){});
         }
     }
-      
 }
 
 void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
@@ -86,7 +96,7 @@ void ActionMap::mapInput(const std::string & actionName, std::vector<InputMappin
     InputAction<T> inputAction;
     if (getOrAddAction<T>(actionName, inputAction))
     {
-        inputAction.mapInput(buttonMappings);
+        inputAction.mapInput(inputMappings);
     }   
 }
 

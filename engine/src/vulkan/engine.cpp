@@ -163,36 +163,36 @@ void VulkanEngine::run()
 
   // action.AddKey(Key, )
 
-  // const std::string moveActionName = "Move";
-  // arete::input::InputAction<glm::vec3> moveAction { .name = moveActionName };
-  // moveAction.mapAxis(
-  //   {
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_W,
-  //       .axis = arete::input::Axis::Forward
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_A,
-  //       .axis = arete::input::Axis::Left
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_S,
-  //       .axis = arete::input::Axis::Back
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_D,
-  //       .axis = arete::input::Axis::Right
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_E,
-  //       .axis = arete::input::Axis::Up
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_Q,
-  //       .axis = arete::input::Axis::Down
-  //     }
-  //   }
-  // );
+  const std::string moveActionName = "Move";
+  arete::input::InputAction<glm::vec3> moveAction(moveActionName);
+  moveAction.mapInput(
+    {
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_W,
+        .axis = arete::input::Axis::Forward
+      },
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_A,
+        .axis = arete::input::Axis::Left
+      },
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_S,
+        .axis = arete::input::Axis::Back
+      },
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_D,
+        .axis = arete::input::Axis::Right
+      },
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_E,
+        .axis = arete::input::Axis::Up
+      },
+      arete::input::InputMapping<glm::vec3> {
+        .inputKey = arete::input::InputKey::KEY_Q,
+        .axis = arete::input::Axis::Down
+      }
+    }
+  );
 
   // link behaviour to action callback
   // moveAction.performed = [&](const arete::input::InputAction::CallbackContext & ctx){

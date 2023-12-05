@@ -66,7 +66,7 @@ enum class InputDeviceType {
 
 
 
-// Action Map / Input Action
+// Input Mapping
 
 enum Axis {
     Forward,
@@ -91,13 +91,23 @@ struct InputMapping<glm::vec3> {
     Axis axis;
 };
 
-template<typename T>
-class InputAction
-{
 
+
+// ActionMap / InputAction
+
+class InputActionBase
+{
 public:
+    InputActionBase() {}
+    InputActionBase(const std::string & Name);
+
     struct CallbackContext {
-        T t;
+        
+        template<typename T>
+        T readValue();
+
+    private:
+        void * data;
     };
 
     using ActionCallback = std::function<void(const CallbackContext&)>;
@@ -108,34 +118,23 @@ public:
 
     std::string name;
 };
-template<>
-class InputAction<glm::vec3>
-{
 
+template<typename T>
+class InputAction : public InputActionBase
+{
 public:
-    //! Maps action.
-    //! @param axisMapping Multiple axis mappings.
+    InputAction() : InputActionBase() {}
+    InputAction(const std::string & Name) : InputActionBase(Name) {}
+
     void mapInput(
-        std::vector<InputMapping<glm::vec3>> axisMappings
+        std::vector<InputMapping<T>> inputMappings
     );
 
+    T data;
 };
 
-template<>
-class InputAction<bool>
+class ActionMap
 {
-
-public:
-    //! Maps action.
-    //! @param axisMapping Multiple axis mappings.
-    void mapInput(
-        std::vector<InputMapping<bool>> buttonMappings
-    );
-
-};
-
-
-class ActionMap {
 
 public:
     template<typename T>
