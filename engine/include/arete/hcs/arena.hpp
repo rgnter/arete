@@ -18,13 +18,18 @@ template<class ComponentHandleType, class ComponentType>
 class ComponentArena
 {
 public:
-  using ComponentIndex = int64_t;
+  //! Contiguous array of components.
   using ComponentArray = std::vector<ComponentType>;
+  //! Represents index of an component in the array of components.
+  using ComponentIndex = int64_t;
+  //! Represents index of all component handles to component indexes.
   using ComponentIndexMap = std::unordered_map<ComponentHandleType, ComponentIndex>;
+  //! Represents array of freed components of which space can be re-used.
   using ComponentFreelist = std::vector<ComponentIndex>;
-
+  //! Atomic counter of unique components created in this component arena.
   using ComponentCounter = std::atomic<ComponentHandleType>;
 
+  //! Default constructor.
   ComponentArena() = default;
 
   //! Deleted copy constructor.
@@ -73,7 +78,7 @@ public:
     ComponentIndex index = indexIterator->first;
     _components[index] = {};
 
-    // Erase the component index to component handle assignment
+    // Erase the component index to component handle index entry
     // and mark this component index as free.
     _componentIndex.erase(indexIterator);
     _componentFreelist.push_back(index);
