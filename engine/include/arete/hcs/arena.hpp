@@ -49,6 +49,7 @@ public:
     } else
     {
       index = _components.size();
+      _components.emplace_back();
     }
 
     auto& component = _components[index];
@@ -70,8 +71,6 @@ public:
     // Get the index assigned to the component handle
     // and use that to retrieve reference to component.
     ComponentIndex index = indexIterator->first;
-    auto& component = _components[index];
-    component = {};
 
     // Erase the component index to component handle assignment
     // and mark this component index as free.
@@ -108,7 +107,6 @@ private:
   ComponentIndexMap _componentIndex;
   ComponentFreelist _componentFreelist;
 
-  ComponentIndex _contiguousIndex{ 0 };
   ComponentCounter _componentCounter{ 0 };
 };
 
