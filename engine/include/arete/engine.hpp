@@ -3,8 +3,6 @@
 
 #include "core.hpp"
 
-#include <span>
-#include <array>
 #include <vector>
 #include <functional>
 #include <unordered_map>

@@ -11,7 +11,7 @@ namespace arete::hcs
 
 //! Spatial component.
 class SpatialComponent
-  : public ComponentBehaviourBase {
+  : public BehaviourComponentBase {
 
 public:
   inline virtual void HandleInput(float value, int key);
