@@ -69,8 +69,9 @@ public:
       return false;
 
     // Get the index assigned to the component handle
-    // and use that to retrieve reference to component.
+    // and use that to retrieve reference to component and default construct it.
     ComponentIndex index = indexIterator->first;
+    _components[index] = {};
 
     // Erase the component index to component handle assignment
     // and mark this component index as free.
