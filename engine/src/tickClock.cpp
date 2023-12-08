@@ -5,6 +5,7 @@ namespace arete {
 void TickClock::setStartPoint()
 {
     currentTime = timer.now();
+    deltaSum = 0;
 }
 
 bool TickClock::tick(float & deltaTime)

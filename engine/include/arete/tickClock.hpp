@@ -20,7 +20,7 @@ private:
     std::chrono::steady_clock::time_point currentTime;
     std::chrono::steady_clock::time_point lastTime;
 
-    float deltaSum;
+    float deltaSum = 0;
 };
 
 }

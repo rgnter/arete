@@ -280,8 +280,8 @@ void VulkanEngine::run()
   arete::TickClock physicsTickClock(60);
   tickClock.setStartPoint();
   physicsTickClock.setStartPoint();
-  float deltaTime;
-  float physicsDeltaTime;
+  float deltaTime = 0;
+  float physicsDeltaTime = 0;
 
   while(!glfwWindowShouldClose(_display._window))
   {
@@ -334,14 +334,14 @@ void VulkanEngine::run()
     if (tickClock.tick(deltaTime))
     {
       // update
-      std::cout << deltaTime << "\n";
+      // std::cout << deltaTime << "\n";
     }
     
     // physicsTick
     if (physicsTickClock.tick(physicsDeltaTime))
     {
       // update
-      // std::cout << physicsDeltaTime << "\n";
+      std::cout << physicsDeltaTime << "\n";
     }
 
     rendering.draw();
