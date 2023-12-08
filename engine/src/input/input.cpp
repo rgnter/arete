@@ -1,5 +1,5 @@
 #include "arete/input/input.hpp"
-
+#include <iostream>
 
 namespace arete::input {
 
@@ -59,7 +59,6 @@ void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisM
         Input::tryRegisterListenerOfDevice(
             getInputDeviceTypeFromKey(inputMapping.inputKey), 0, inputMapping.inputKey, 
             [&](float value) {
-                // _value == glm::vec3(0, 0, 0);
                 if (value == 1)
                 {
                     _activeInputs++;
@@ -68,6 +67,7 @@ void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisM
                     {
                         _value = glm::vec3(0);
                         _value += inputMapping.axis;
+
                         if (started)
                         {
                             CallbackContext ctx;
@@ -75,13 +75,16 @@ void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisM
                         }
                         _started = true;
                     }
+                    else
+                    {
+                        _value += inputMapping.axis;
+                    }
 
                     if (performed)
                     {
                         CallbackContext ctx;
                         performed(ctx, _value);
                     }
-                    
                 }
                 else
                 {
@@ -130,15 +133,23 @@ void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
             [&](float value) {
                 if (value == 1)
                 {
+                    _value = true;
+
                     if (!_started)
                     {
-                        CallbackContext startedCtx;
-                        started(startedCtx, true);
+                        if (started)
+                        {
+                            CallbackContext startedCtx;
+                            started(startedCtx, true);
+                        }
                         _started = true;
                     }
 
-                    CallbackContext performedCtx;
-                    performed(performedCtx, true);
+                    if (performed)
+                    {
+                        CallbackContext performedCtx;
+                        performed(performedCtx, true);
+                    }
                 }
                 else
                 {
@@ -149,11 +160,19 @@ void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
                         _started = true;
                     }
 
-                    CallbackContext performedCtx;
-                    performed(performedCtx, true);
+                    if (performed)
+                    {
+                        CallbackContext performedCtx;
+                        performed(performedCtx, true);
+                    }
+
+                    _value = false;
                     
-                    CallbackContext canceledCtx;
-                    canceled(canceledCtx, false);
+                    if (canceled)
+                    {
+                        CallbackContext canceledCtx;
+                        canceled(canceledCtx, false);
+                    }
                     _started = false;
                 }
             }
@@ -210,31 +229,29 @@ bool ActionMap::getOrAddAction(const std::string & actionName, InputAction<glm::
 
 
 template<typename T>
-bool ActionMap::getAction(const std::string & actionName, InputAction<T> & inputAction)
+InputAction<T> * ActionMap::getAction(const std::string & actionName)
 {
-    return false;
+    return nullptr;
 }
 
 template<>
-bool ActionMap::getAction(const std::string & actionName, InputAction<bool> & inputAction)
+InputAction<bool>* ActionMap::getAction(const std::string & actionName)
 {
     if (_boolInputActions.contains(actionName))
     {
-        inputAction = _boolInputActions[actionName];
-        return true;
+        return & _boolInputActions[actionName];
     }
-    return false;
+    return nullptr;
 }
 
 template<>
-bool ActionMap::getAction(const std::string & actionName, InputAction<glm::vec3> & inputAction)
+InputAction<glm::vec3> * ActionMap::getAction(const std::string & actionName)
 {
     if (_vectorInputActions.contains(actionName))
     {
-        inputAction = _vectorInputActions[actionName];
-        return true;
+        return & _vectorInputActions[actionName];
     }
-    return false;
+    return nullptr;
 }
 
 
@@ -314,6 +331,8 @@ void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
 // Input - Handling input devices
 
 Input::DeviceMap Input::_devices;
+double Input::_mouseX;
+double Input::_mouseY;
 
 void Input::registerDevice(const InputDevice& device)
 {

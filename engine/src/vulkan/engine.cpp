@@ -164,42 +164,77 @@ void VulkanEngine::run()
 
   // action.AddKey(Key, )
 
-  const std::string moveActionName = "Move";
-  arete::input::InputAction<glm::vec3> moveAction(moveActionName);
-  moveAction.mapInput(
-    {
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_W,
-        .axis = glm::vec3(0, 0, 1)
-      },
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_A,
-        .axis = glm::vec3(-1, 0, 0)
-      },
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_S,
-        .axis = glm::vec3(0, 0, -1)
-      },
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_D,
-        .axis = glm::vec3(1, 0, 0)
-      },
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_E,
-        .axis = glm::vec3(0, 1, 0)
-      },
-      arete::input::InputMapping<glm::vec3> {
-        .inputKey = arete::input::InputKey::KEY_Q,
-        .axis = glm::vec3(0, -1, 0)
+  //! Generate editor camera controls
+  //!   this should be probably moved to editor.cpp  in future
+  arete::input::InputAction<glm::vec3> editorCameraMoveAction;
+  arete::input::InputAction<glm::vec3> editorCameraLookAction;
+  arete::input::InputAction<bool> editorCameraDragAction;
+  glm::vec3 cameraMoveInput(0);
+  glm::vec3 cameraLookInput(0);
+  bool cameraDragInput = false;
+  {
+    editorCameraMoveAction.mapInput(
+      std::vector<arete::input::InputMapping<glm::vec3>> {
+        {
+          .inputKey = arete::input::InputKey::KEY_W,
+          .axis = glm::vec3(0, 0, 1)
+        },
+        {
+          .inputKey = arete::input::InputKey::KEY_A,
+          .axis = glm::vec3(1, 0, 0)
+        },
+        {
+          .inputKey = arete::input::InputKey::KEY_S,
+          .axis = glm::vec3(0, 0, -1)
+        },
+        {
+          .inputKey = arete::input::InputKey::KEY_D,
+          .axis = glm::vec3(-1, 0, 0)
+        },
+        {
+          .inputKey = arete::input::InputKey::KEY_E,
+          .axis = glm::vec3(0, 1, 0)
+        },
+        {
+          .inputKey = arete::input::InputKey::KEY_Q,
+          .axis = glm::vec3(0, -1, 0)
+        }
       }
-    }
-  );
+    );
 
-  // link behaviour to action callback
-  glm::vec3 cameraInput(0);
-  moveAction.performed = [&](const auto & event, const auto value) {
-    cameraInput = value;
-  };
+    editorCameraMoveAction.performed = [&](const auto & event, const auto value) {
+      cameraMoveInput = value;
+    };
+
+    editorCameraLookAction.mapInput(
+      std::vector<arete::input::InputMapping<glm::vec3>> {
+        {
+          .inputKey = arete::input::InputKey::MOUSE_MOVE_X,
+          .axis = glm::vec3(1, 0, 0)
+        },
+        {
+          .inputKey = arete::input::InputKey::MOUSE_MOVE_Y,
+          .axis = glm::vec3(0, 1, 0)
+        }
+      }
+    );
+
+    editorCameraLookAction.performed = [&](const auto & event, const auto value) {
+      cameraLookInput = value;
+    };
+
+    editorCameraDragAction.mapInput(
+      std::vector<arete::input::InputMapping<bool>> {
+        {
+          .inputKey = arete::input::InputKey::MOUSE_LEFT,
+        }
+      }
+    );
+
+    editorCameraDragAction.performed = [&](const auto & event, const auto value) {
+      cameraDragInput = value;
+    };
+  }
 
   _renderer.setup();
   _renderer.surface(_display._window);
@@ -241,8 +276,10 @@ void VulkanEngine::run()
     _renderer._uniformBufferMemory.mapMemory(0, sizeof(glm::mat4x4)));
 
   
-  arete::TickClock tickClock;
-  arete::TickClock physicsTickClock;
+  arete::TickClock tickClock(0);
+  arete::TickClock physicsTickClock(60);
+  tickClock.setStartPoint();
+  physicsTickClock.setStartPoint();
   float deltaTime;
   float physicsDeltaTime;
 
@@ -276,7 +313,16 @@ void VulkanEngine::run()
     // if (rotationX)
     //   _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
 
-    cam.pos += (cameraInput * cam.rot) * 0.01f; // deltaTime
+    cam.pos += (cameraMoveInput * cam.rot) * 0.01f; // deltaTime
+    if (cameraDragInput)
+    {
+      cam.rot *= 
+        glm::angleAxis(cameraLookInput.x, glm::vec3(0, 1, 0))
+        *
+        glm::angleAxis(cameraLookInput.y, glm::vec3(1, 0, 0))
+      ;
+    }
+    
     _pushConstants.view = glm::lookAt(
       cam.pos,
       cam.pos + glm::vec3(0, 0, 1) * cam.rot,

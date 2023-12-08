@@ -144,7 +144,7 @@ public:
     template<typename T>
     bool getOrAddAction(const std::string & actionName, InputAction<T> & inputAction);
     template<typename T>
-    bool getAction(const std::string & actionName, InputAction<T> & inputAction);
+    InputAction<T> * getAction(const std::string & actionName);
 
 private:
     Mapping<bool> _boolInputActions;
@@ -212,6 +212,9 @@ public:
 protected:
     static bool tryAddToNewStateBufferOfDevice(InputDeviceType type, int index, InputKey key, InputDeviceState value);
     static bool tryRegisterListenerOfDevice(InputDeviceType type, int index, InputKey key, Callback callback);
+
+    static double _mouseX;
+    static double _mouseY;
 
 private:
     static bool containsDevice(InputDeviceType deviceType, int deviceIndex);

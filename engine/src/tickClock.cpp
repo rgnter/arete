@@ -2,7 +2,7 @@
 
 namespace arete {
 
-void TickClock::setup()
+void TickClock::setStartPoint()
 {
     currentTime = timer.now();
 }

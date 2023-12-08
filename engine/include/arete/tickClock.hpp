@@ -6,7 +6,10 @@ namespace arete {
 
 struct TickClock
 {
-    void setup();
+public:
+    TickClock(float Target) : target(Target) {}
+
+    void setStartPoint();
 
     bool tick(float & deltaTime);
 

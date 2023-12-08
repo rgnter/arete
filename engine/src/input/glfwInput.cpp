@@ -42,6 +42,33 @@ void GlfwInput::setup(GLFWwindow * window)
 		// }
 	});
 
+	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos){
+		double deltaX = xPos - _mouseX;
+		double deltaY = yPos - _mouseY;
+		_mouseX = xPos;
+		_mouseY = yPos;
+		Input::tryAddToNewStateBufferOfDevice(
+			InputDeviceType::MOUSE, 0,
+			InputKey::MOUSE_MOVE_X,
+			InputDeviceState(deltaX)
+		);
+		Input::tryAddToNewStateBufferOfDevice(
+			InputDeviceType::MOUSE, 0,
+			InputKey::MOUSE_MOVE_Y,
+			InputDeviceState(deltaY)
+		);
+		Input::tryAddToNewStateBufferOfDevice(
+			InputDeviceType::MOUSE, 0,
+			InputKey::MOUSE_POS_X,
+			InputDeviceState(xPos)
+		);
+		Input::tryAddToNewStateBufferOfDevice(
+			InputDeviceType::MOUSE, 0,
+			InputKey::MOUSE_POS_Y,
+			InputDeviceState(yPos)
+		);
+	});
+
 	// glfwSetJoystickCallback([](int joystickId, int event) {
 	// 	if (this) {
 	// 		if (event == GLFW_CONNECTED /*&& glfwJoystickIsGamepad(joystickId)*/) {
@@ -107,6 +134,7 @@ InputKey GlfwInput::mouseButtonToInputKey(int mouseButton)
         case GLFW_MOUSE_BUTTON_LEFT: return InputKey::MOUSE_LEFT;
         case GLFW_MOUSE_BUTTON_RIGHT: return InputKey::MOUSE_RIGHT;
         case GLFW_MOUSE_BUTTON_MIDDLE: return InputKey::MOUSE_MIDDLE;
+        case GLFW_RAW_MOUSE_MOTION: return InputKey::MOUSE_MIDDLE;
         default: return InputKey::UNKNOWN;
 	}
 }
