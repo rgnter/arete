@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <iostream>
 
 namespace arete
 {
@@ -239,6 +240,12 @@ void VulkanEngine::run()
   auto uniform = reinterpret_cast<glm::mat4x4*>(
     _renderer._uniformBufferMemory.mapMemory(0, sizeof(glm::mat4x4)));
 
+  
+  arete::TickClock tickClock;
+  arete::TickClock physicsTickClock;
+  float deltaTime;
+  float physicsDeltaTime;
+
   while(!glfwWindowShouldClose(_display._window))
   {
     _glfwInput.processInput();
@@ -275,6 +282,21 @@ void VulkanEngine::run()
       cam.pos + glm::vec3(0, 0, 1) * cam.rot,
       glm::vec3(0, 1, 0) * cam.rot
     );
+
+
+    // tick
+    if (tickClock.tick(deltaTime))
+    {
+      // update
+      std::cout << deltaTime << "\n";
+    }
+    
+    // physicsTick
+    if (physicsTickClock.tick(physicsDeltaTime))
+    {
+      // update
+      // std::cout << physicsDeltaTime << "\n";
+    }
 
     rendering.draw();
 

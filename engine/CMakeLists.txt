@@ -9,7 +9,8 @@ add_library(engine STATIC
         src/vulkan/engine.cpp
         src/engine.cpp
         src/input/input.cpp
-        src/input/glfwInput.cpp)
+        src/input/glfwInput.cpp
+        src/tickClock.cpp)
 
 set_target_properties(engine PROPERTIES
         POSITION_INDEPENDENT_CODE ON)

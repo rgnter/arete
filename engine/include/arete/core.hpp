@@ -3,6 +3,7 @@
 
 #include "model/model.hpp"
 #include "arete/input/input.hpp"
+#include "arete/tickClock.hpp"
 
 #include <memory>
 #include <utility>
