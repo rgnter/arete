@@ -198,27 +198,27 @@ void VulkanEngine::run()
     
     move->mapInput(std::vector<arete::input::InputMapping<glm::vec3>> {
       {
-        .inputKey = arete::input::InputKey::KEY_W,
+        .inputKey = arete::input::InputKey::KEYBOARD_W,
         .axis = glm::vec3(0, 0, 1)
       },
       {
-        .inputKey = arete::input::InputKey::KEY_A,
+        .inputKey = arete::input::InputKey::KEYBOARD_A,
         .axis = glm::vec3(1, 0, 0)
       },
       {
-        .inputKey = arete::input::InputKey::KEY_S,
+        .inputKey = arete::input::InputKey::KEYBOARD_S,
         .axis = glm::vec3(0, 0, -1)
       },
       {
-        .inputKey = arete::input::InputKey::KEY_D,
+        .inputKey = arete::input::InputKey::KEYBOARD_D,
         .axis = glm::vec3(-1, 0, 0)
       },
       {
-        .inputKey = arete::input::InputKey::KEY_E,
+        .inputKey = arete::input::InputKey::KEYBOARD_E,
         .axis = glm::vec3(0, 1, 0)
       },
       {
-        .inputKey = arete::input::InputKey::KEY_Q,
+        .inputKey = arete::input::InputKey::KEYBOARD_Q,
         .axis = glm::vec3(0, -1, 0)
       }
     });
@@ -239,8 +239,6 @@ void VulkanEngine::run()
     });
 
     look->performed = [&](const auto & event, const auto value) {
-			// printf("(%d, %d)\n", static_cast<int>(value.x), static_cast<int>(value.y));
-
       if (cameraDragInput)
       {
         std::cout << value.x << ", " << value.y << "\n";
@@ -262,12 +260,18 @@ void VulkanEngine::run()
 
     drag->mapInput(std::vector<arete::input::InputMapping<bool>> {
       {
-        .inputKey = arete::input::InputKey::MOUSE_LEFT,
+        .inputKey = arete::input::InputKey::MOUSE_RIGHT,
       }
     });
 
+    drag->started = [&](const auto & event, const auto value) {
+      _glfwInput.setMouseMode(arete::input::MouseMode::DISABLED);
+    };
     drag->performed = [&](const auto & event, const auto value) {
       cameraDragInput = value;
+    };
+    drag->canceled = [&](const auto & event, const auto value) {
+      _glfwInput.setMouseMode(arete::input::MouseMode::NORMAL);
     };
   
     cameraActionMap.bind(_glfwInput);

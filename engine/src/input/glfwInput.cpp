@@ -95,6 +95,8 @@ void GlfwInput::bind(GLFWwindow * window)
 	// 		);
 	// 	}
 	// }
+
+	boundWindow = window;
 }
 
 
@@ -105,18 +107,36 @@ void GlfwInput::processInput()
 	Input::processInput();
 }
 
+void GlfwInput::setMouseMode(MouseMode mouseMode)
+{
+	switch (mouseMode)
+	{
+		case MouseMode::NORMAL:
+			glfwSetInputMode(boundWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		break;
+
+		case MouseMode::HIDDEN:
+			glfwSetInputMode(boundWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		break;
+
+		case MouseMode::DISABLED:
+			glfwSetInputMode(boundWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		break;	
+	}
+}
+
 
 InputKey GlfwInput::keyToInputKey(int key)
 {
 	switch (key) {
-        case GLFW_KEY_A: return InputKey::KEY_A;
-        case GLFW_KEY_B: return InputKey::KEY_B;
-        case GLFW_KEY_C: return InputKey::KEY_C;
-        case GLFW_KEY_D: return InputKey::KEY_D;
-        case GLFW_KEY_E: return InputKey::KEY_E;
-        case GLFW_KEY_S: return InputKey::KEY_S;
-        case GLFW_KEY_W: return InputKey::KEY_W;
-        case GLFW_KEY_Q: return InputKey::KEY_Q;
+        case GLFW_KEY_A: return InputKey::KEYBOARD_A;
+        case GLFW_KEY_B: return InputKey::KEYBOARD_B;
+        case GLFW_KEY_C: return InputKey::KEYBOARD_C;
+        case GLFW_KEY_D: return InputKey::KEYBOARD_D;
+        case GLFW_KEY_E: return InputKey::KEYBOARD_E;
+        case GLFW_KEY_S: return InputKey::KEYBOARD_S;
+        case GLFW_KEY_W: return InputKey::KEYBOARD_W;
+        case GLFW_KEY_Q: return InputKey::KEYBOARD_Q;
         default: return InputKey::UNKNOWN;
 	}
 }

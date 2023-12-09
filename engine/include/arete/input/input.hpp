@@ -10,18 +10,24 @@ namespace arete::input {
 
 // Common data
 
+enum class MouseMode {
+	NORMAL,
+	HIDDEN,
+	DISABLED,
+};
+
 enum class InputKey {
 	UNKNOWN,
 
 	// KEYBOARD
-	KEY_A,
-	KEY_B,
-	KEY_C,
-	KEY_D,
-	KEY_E,
-	KEY_S,
-	KEY_W,
-	KEY_Q,
+	KEYBOARD_A,
+	KEYBOARD_B,
+	KEYBOARD_C,
+	KEYBOARD_D,
+	KEYBOARD_E,
+	KEYBOARD_S,
+	KEYBOARD_W,
+	KEYBOARD_Q,
 
 	// MOUSE
 	MOUSE_POS_X,
@@ -55,7 +61,7 @@ enum class InputKey {
 };
 
 enum class InputDeviceType {
-    UNKNOWN,
+	UNKNOWN,
     
 	KEYBOARD,
 	MOUSE,
@@ -127,6 +133,7 @@ public:
 
 	virtual void processInput();
 
+	virtual void setMouseMode(MouseMode mouseMode) {};
 
 protected:
 
@@ -368,11 +375,11 @@ protected:
 					{
 						ctx.performed = true;
 					}
-					if (_value == relaxedValue && _valueTemp != relaxedValue)
+					if (_activeInputs.size() == 0)
 					{
 						ctx.canceled = true;
+						ctx.performed = true;
 						_isActive = false;
-						_shouldProcessInput = false;
 					}				
 				}
 
@@ -396,9 +403,12 @@ protected:
 					_activeInputs.clear();
 				}
 
+
 				ctx.started = false;
 				ctx.performed = false;
 				ctx.canceled = false;
+
+				_shouldProcessInput = false;
 			break;
 
 
@@ -486,7 +496,6 @@ protected:
 		{
 			_value = T_typeName(0);
 			_valueTemp = T_typeName(0);
-			_shouldProcessInput = true;
 		}
 
 		T_typeName newValue = newState * inputMappingPtr->axis;
@@ -515,6 +524,8 @@ protected:
 				_value = T_typeName(0);
 			}
 		}
+
+		_shouldProcessInput = true;
 	}
 
 

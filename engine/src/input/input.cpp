@@ -6,13 +6,14 @@ namespace arete::input {
 InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 {
 	switch (key) {
-	case InputKey::KEY_A:
-	case InputKey::KEY_B:
-	case InputKey::KEY_C:
-	case InputKey::KEY_D:
-	case InputKey::KEY_E:
-	case InputKey::KEY_S:
-	case InputKey::KEY_W:
+	case InputKey::KEYBOARD_A:
+	case InputKey::KEYBOARD_B:
+	case InputKey::KEYBOARD_C:
+	case InputKey::KEYBOARD_D:
+	case InputKey::KEYBOARD_E:
+	case InputKey::KEYBOARD_S:
+	case InputKey::KEYBOARD_W:
+	case InputKey::KEYBOARD_Q:
 		return InputDeviceType::KEYBOARD;
 	case InputKey::MOUSE_POS_X:
 	case InputKey::MOUSE_POS_Y:
