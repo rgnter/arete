@@ -125,10 +125,10 @@ void VulkanEngine::run()
   // Initialize camera
   struct Camera {
     // Selfie / Position camera at the front of cube
-    glm::vec3 pos { 0, 0, -6.0f };
+    glm::vec3 pos { 0, 0, 6.0f };
     glm::quat rot { 1.0f, 0, 0, 0 };
   } cam;
-  // cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
+  cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
 
   // Initialize push constants
   {
@@ -185,12 +185,40 @@ void VulkanEngine::run()
   // Initialize input
   arete::input::ActionMap cameraActionMap;
   glm::vec3 cameraMoveInput(0);
-  glm::vec2 cameraLookInput(0);
+  glm::vec3 cameraLookInput(0);
   bool cameraDragInput = false;
   const float sensitivity = .002f;
   const float speed = 2.f;
   {
     _glfwInput.bind(_display._window);
+
+    auto angleBetween = [](
+      glm::vec3 a,
+      glm::vec3 b,
+      glm::vec3 origin
+    ) {
+      glm::vec3 da = glm::normalize(a-origin);
+      glm::vec3 db = glm::normalize(b-origin);
+      return glm::acos(glm::dot(da, db));
+    };
+
+    glm::vec3 camForward = glm::vec3(0, 0, 1) * cam.rot;
+    glm::vec3 forwardYPlane = glm::vec3(camForward.x, 0, camForward.z);
+    
+    float yAngle = angleBetween(
+      glm::vec3(0, 0, 1),
+      forwardYPlane,
+      glm::vec3(0)
+    );
+
+    float xAngle = angleBetween(
+      forwardYPlane,
+      camForward,
+      glm::vec3(0)
+    );
+
+    cameraLookInput.x = yAngle;
+    cameraLookInput.y = xAngle;
 
     auto * move = cameraActionMap.createAction<glm::vec3>("move", arete::input::Composite::VALUE);
     auto * look = cameraActionMap.createAction<glm::vec3>("look", arete::input::Composite::DELTA);
