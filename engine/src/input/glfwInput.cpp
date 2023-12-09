@@ -1,8 +1,7 @@
 #include "arete/vulkan.hpp"
 #include "arete/input/glfwInput.hpp"
 
-#include <iostream>
-
+#include <cstdio>
 namespace arete::input
 {
 
@@ -33,7 +32,7 @@ void GlfwInput::bind(GLFWwindow * window)
 	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
 		if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
 		{
-			if (auto * device = input->getDevice(InputDeviceType::KEYBOARD, 0))
+			if (auto * device = input->getDevice(InputDeviceType::MOUSE, 0))
 			{
 				device->addToNewStateBuffer(
 					GlfwInput::mouseButtonToInputKey(button),
@@ -46,28 +45,18 @@ void GlfwInput::bind(GLFWwindow * window)
 	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos) {
 		if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
 		{
-			double deltaX = xPos - input->_mouseX;
-			double deltaY = yPos - input->_mouseY;
-			std::cout << "devicePos: " << xPos << ", " << yPos << "\n" << "deviceDelta: " << deltaX << ", " << deltaY << "\n";;
-			input->_mouseX = xPos;
-			input->_mouseY = yPos;
-			if (auto * device = input->getDevice(InputDeviceType::KEYBOARD, 0))
+			input->_mouseX = static_cast<int>(xPos);
+			input->_mouseY = static_cast<int>(yPos);
+
+			if (auto * device = input->getDevice(InputDeviceType::MOUSE, 0))
 			{
 				device->addToNewStateBuffer(
-					InputKey::MOUSE_MOVE_X,
-					InputDeviceState(deltaX)
-				);
-				device->addToNewStateBuffer(
-					InputKey::MOUSE_MOVE_Y,
-					InputDeviceState(deltaY)
-				);
-				device->addToNewStateBuffer(
 					InputKey::MOUSE_POS_X,
-					InputDeviceState(xPos)
+					InputDeviceState(input->_mouseX)
 				);
 				device->addToNewStateBuffer(
 					InputKey::MOUSE_POS_Y,
-					InputDeviceState(yPos)
+					InputDeviceState(input->_mouseY)
 				);
 			}
 		}

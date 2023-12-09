@@ -3,7 +3,6 @@
 
 namespace arete::input {
 
-
 InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 {
 	switch (key) {
@@ -17,8 +16,6 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 		return InputDeviceType::KEYBOARD;
 	case InputKey::MOUSE_POS_X:
 	case InputKey::MOUSE_POS_Y:
-	case InputKey::MOUSE_MOVE_X:
-	case InputKey::MOUSE_MOVE_Y:
 	case InputKey::MOUSE_LEFT:
 	case InputKey::MOUSE_RIGHT:
 	case InputKey::MOUSE_MIDDLE:
@@ -48,143 +45,164 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 }
 
 
+// Input Device - Device state and callbacks
 
-// Input Mapping
+Input::InputDevice::InputDevice()
+{
+	type = InputDeviceType::UNKNOWN;
+	index = -1;
+}
+
+Input::InputDevice::InputDevice(InputDeviceType Type, int Index)
+{
+	type = Type;
+	index = Index;
+}
+
+Input::DeviceCallbackBankHandle Input::InputDevice::registerListener(
+	InputKey inputKey,
+	DeviceCallback callback)
+{
+	auto & listeners = _onStateChanged[inputKey];
+	return listeners.emplace(listeners.end(), callback);
+}
+
+void Input::InputDevice::unregisterListener(
+	InputKey inputKey,
+	DeviceCallbackBankHandle handle)
+{
+	_onStateChanged[inputKey].erase(handle);
+}
+
+void Input::InputDevice::addToNewStateBuffer(InputKey key, InputDeviceState state)
+{
+	_newStateBuffer.emplace_back(key, state);
+}
+
+void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
+{
+	for (const auto & entry : _newStateBuffer)
+	{
+		InputKey newInputKey = entry.first;
+		float newValue = entry.second.value;
+		float oldValue = 0;
+
+		if (_currentState.contains(newInputKey))
+		{
+			oldValue = _currentState[newInputKey].value;
+			if (oldValue == newValue)
+			{
+				continue;
+			}
+		}
+
+		capture.emplace(newInputKey, newValue);
+		if (newValue != 0)
+		{
+			_currentState[newInputKey].value = newValue;
+		}
+		else
+		{
+			_currentState.erase(newInputKey);
+		}
+
+		if (_onStateChanged.contains(newInputKey))
+		{
+			for (const auto & callback : _onStateChanged[newInputKey])
+			{
+				callback(newValue, oldValue);
+			}
+		}   
+	}
+	_newStateBuffer.clear();
+}
 
 
 
+// Input - Input device management
 
-// Input Action - Input Action registered to devices callbacks
+void Input::registerDevice(const InputDevice& device)
+{
+	_devices[device.type].emplace(device.index, device);
+}
 
+void Input::removeDevice(InputDeviceType type, int index)
+{
+	if (containsDevice(type, index))
+	{
+		_devices[type].erase(index);
+		if (_devices[type].size() == 0)
+		{
+			_devices.erase(type);
+		}
+	}
 
-// void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisMappings)
-// {
-//     _inputMappings = axisMappings;
-//     for (auto & inputMapping : _inputMappings)
-//     {
-//         Input::tryRegisterListenerOfDevice(
-//             getInputDeviceTypeFromKey(inputMapping.inputKey), 0, inputMapping.inputKey, 
-//             [&](float value) {
-//                 if (value != 0)
-//                 {
-//                     _activeInputs++;
+	// erase_if(_devices, [type, index](const InputDevice& device) {
+	// 		return device.type == type && device.index == index;
+	// 	}
+	// );
+}
 
-//                     if (!_started)
-//                     {
-//                         _value = glm::vec3(0);
-//                         _value += inputMapping.axis * value;
+Input::InputDevice * Input::getDevice(InputDeviceType type, int index)
+{
+	if (containsDevice(type, index))
+	{
+		return &_devices[type][index];
+	}
+	return nullptr;
+}
 
-//                         if (started)
-//                         {
-//                             CallbackContext ctx;
-//                             started(ctx, _value);
-//                         }
-//                         _started = true;
-//                     }
-//                     else
-//                     {
-//                         _value += inputMapping.axis * value;
-//                     }
+void Input::addOnProcessListener(OnProcessCallback callback)
+{
+	_onProcessInput.push_back(std::move(callback));
+}
 
-//                     if (performed)
-//                     {
-//                         CallbackContext ctx;
-//                         performed(ctx, _value);
-//                     }
-//                 }
-//                 else
-//                 {
-//                     _activeInputs--;
+void Input::removeOnProcessListener(OnProcessCallback callback)
+{
+	_onProcessInput.erase(std::remove_if(
+		_onProcessInput.begin(),
+		_onProcessInput.end(),
+		[&](std::function<void(void)>& function) {
+			// Check if the two functions have the same type
+			if (typeid(function) != typeid(callback))
+			{
+				return false;
+			}
 
-//                     _value -= inputMapping.axis * value;
+			// Check if the two functions refer to the same method
+			if ((function.target_type() != callback.target_type())
+				|| (function.target<void(void)>() != callback.target<void(void)>()))
+			{
+				return false;
+			}
 
-//                     if (!_started)
-//                     {
-//                         if (started)
-//                         {
-//                             CallbackContext ctx;
-//                             started(ctx, _value);
-//                         }
-//                         _started = true;
-//                     }
+			return true;
+		}
+	));
+}
 
-//                     if (performed)
-//                     {
-//                         CallbackContext ctx;
-//                         performed(ctx, _value);
-//                     }
+void Input::processInput()
+{
+	std::unordered_map<InputKey, InputDeviceState> inputChangeCapture;
 
-//                     if (_activeInputs == 0)
-//                     {
-//                         _value = glm::vec3(0);
-//                         if (canceled)
-//                         {
-//                             CallbackContext ctx;
-//                             canceled(ctx, _value);
-//                         }
-//                         _started = false;
-//                     }
-//                 }
-//             }
-//         );
-//     }
-// }
+	for (auto & kvp : _devices)
+	{
+		for (auto & device : kvp.second)
+		{
+			device.second.pushAndCapture(inputChangeCapture);
+		}
+	}
 
-// void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
-// {
-//     for (auto & buttonMapping : buttonMappings)
-//     {
-//         Input::tryRegisterListenerOfDevice(
-//             getInputDeviceTypeFromKey(buttonMapping.inputKey), 0, buttonMapping.inputKey,
-//             [&](float value) {
-//                 if (value == 1)
-//                 {
-//                     _value = true;
+	for (auto & callback : _onProcessInput)
+	{
+		callback();
+	}
+}
 
-//                     if (!_started)
-//                     {
-//                         if (started)
-//                         {
-//                             CallbackContext startedCtx;
-//                             started(startedCtx, true);
-//                         }
-//                         _started = true;
-//                     }
-
-//                     if (performed)
-//                     {
-//                         CallbackContext performedCtx;
-//                         performed(performedCtx, true);
-//                     }
-//                 }
-//                 else
-//                 {
-//                     if (!_started)
-//                     {
-//                         CallbackContext startedCtx;
-//                         started(startedCtx, true);
-//                         _started = true;
-//                     }
-
-//                     if (performed)
-//                     {
-//                         CallbackContext performedCtx;
-//                         performed(performedCtx, true);
-//                     }
-
-//                     _value = false;
-                    
-//                     if (canceled)
-//                     {
-//                         CallbackContext canceledCtx;
-//                         canceled(canceledCtx, false);
-//                     }
-//                     _started = false;
-//                 }
-//             }
-//         );
-//     } 
-// }
+bool Input::containsDevice(InputDeviceType type, int index)
+{
+	return _devices.contains(type) && _devices[type].contains(index);
+}
 
 
 
@@ -193,175 +211,67 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 template<typename T>
 InputAction<T> * ActionMap::createAction(const std::string & actionName)
 {
-    return nullptr;
+	return nullptr;
+}
+
+template<typename T>
+InputAction<T> * ActionMap::createAction(const std::string & actionName, Composite composite)
+{
+	return nullptr;
 }
 
 template<>
 InputAction<bool> * ActionMap::createAction(const std::string & actionName)
 {
-    return &_boolInputActions[actionName];
+	_boolInputActions.emplace(actionName, InputAction<bool>(actionName));
+	return &_boolInputActions[actionName];
 }
 
 template<>
-InputAction<glm::vec3> * ActionMap::createAction(const std::string & actionName)
+InputAction<glm::vec3> * ActionMap::createAction(const std::string & actionName, Composite composite)
 {
-    return &_vectorInputActions[actionName];
+	_vectorInputActions.emplace(actionName, InputAction<glm::vec3>(actionName, composite));
+	return &_vectorInputActions[actionName];
 }
 
 
 template<typename T>
 InputAction<T> * ActionMap::getAction(const std::string & actionName)
 {
-    return nullptr;
+	return nullptr;
 }
 
 template<>
 InputAction<bool>* ActionMap::getAction(const std::string & actionName)
 {
-    if (_boolInputActions.contains(actionName))
-    {
-        return & _boolInputActions[actionName];
-    }
-    return nullptr;
+	if (_boolInputActions.contains(actionName))
+	{
+		return & _boolInputActions[actionName];
+	}
+	return nullptr;
 }
 
 template<>
 InputAction<glm::vec3> * ActionMap::getAction(const std::string & actionName)
 {
-    if (_vectorInputActions.contains(actionName))
-    {
-        return & _vectorInputActions[actionName];
-    }
-    return nullptr;
+	if (_vectorInputActions.contains(actionName))
+	{
+		return & _vectorInputActions[actionName];
+	}
+	return nullptr;
 }
 
-
-
-// Input Device - Device state and callbacks
-
-Input::InputDevice::InputDevice()
+void ActionMap::bind(Input & input)
 {
-    type = InputDeviceType::UNKNOWN;
-    index = -1;
+	for (auto & inputAction : _boolInputActions)
+	{
+		inputAction.second.bind(input);
+	}
+
+	for (auto & inputAction : _vectorInputActions)
+	{
+		inputAction.second.bind(input);
+	}
 }
-
-Input::InputDevice::InputDevice(InputDeviceType Type, int Index)
-{
-    type = Type;
-    index = Index;
-}
-
-Input::CallbackBankHandle Input::InputDevice::registerListener(
-    InputKey inputKey,
-    Callback callback)
-{
-    auto & listeners = _onStateChanged[inputKey];
-    return listeners.emplace(listeners.end(), callback);
-}
-
-void Input::InputDevice::unregisterListener(
-    InputKey inputKey,
-    CallbackBankHandle handle)
-{
-    _onStateChanged[inputKey].erase(handle);
-}
-
-void Input::InputDevice::addToNewStateBuffer(InputKey key, InputDeviceState state)
-{
-    _newStateBuffer.emplace_back(key, state);
-}
-
-void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
-{
-    for (const auto & entry : _newStateBuffer)
-    {
-        InputKey newInputKey = entry.first;
-        float newValue = entry.second.value;
-
-        if (_currentState.contains(newInputKey))
-        {
-            if (_currentState[newInputKey].value == newValue)
-            {
-                continue;
-            }
-        }
-
-        capture.emplace(newInputKey, newValue);
-        if (newValue != 0)
-        {
-            _currentState[newInputKey].value = newValue;
-        }
-        else
-        {
-            _currentState.erase(newInputKey);
-        }
-
-        if (_onStateChanged.contains(newInputKey))
-        {
-            for (const auto & callback : _onStateChanged[newInputKey])
-            {
-                callback(newValue);
-            }
-        }
-    }
-    _newStateBuffer.clear();
-}
-
-
-void Input::registerDevice(const InputDevice& device)
-{
-    _devices[device.type].emplace(device.index, device);
-}
-
-void Input::removeDevice(InputDeviceType type, int index)
-{
-    if (containsDevice(type, index))
-    {
-        _devices[type].erase(index);
-        if (_devices[type].size() == 0)
-        {
-            _devices.erase(type);
-        }
-    }
-
-    // erase_if(_devices, [type, index](const InputDevice& device) {
-	// 		return device.type == type && device.index == index;
-	// 	}
-	// );
-}
-
-
-void Input::processInput()
-{
-    std::unordered_map<InputKey, InputDeviceState> inputChangeCapture;
-
-    for (auto & kvp : _devices)
-    {
-        for (auto & device : kvp.second)
-        {
-            device.second.pushAndCapture(inputChangeCapture);
-        }
-    }
-}
-
-void Input::activate(ActionMap inputActionMap)
-{
-    
-}
-
-Input::InputDevice * Input::getDevice(InputDeviceType type, int index)
-{
-    if (containsDevice(type, index))
-    {
-        return &_devices[type][index];
-    }
-    return nullptr;
-}
-
-bool Input::containsDevice(InputDeviceType type, int index)
-{
-    return _devices.contains(type) && _devices[type].contains(index);
-}
-
 
 } // namespace arete::input

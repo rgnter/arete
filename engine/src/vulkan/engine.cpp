@@ -125,10 +125,10 @@ void VulkanEngine::run()
   // Initialize camera
   struct Camera {
     // Selfie / Position camera at the front of cube
-    glm::vec3 pos { 0, 0, 6.0f };
+    glm::vec3 pos { 0, 0, -6.0f };
     glm::quat rot { 1.0f, 0, 0, 0 };
   } cam;
-  cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
+  // cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
 
   // Initialize push constants
   {
@@ -183,101 +183,98 @@ void VulkanEngine::run()
 
 
   // Initialize input
+  arete::input::ActionMap cameraActionMap;
   glm::vec3 cameraMoveInput(0);
   glm::vec2 cameraLookInput(0);
   bool cameraDragInput = false;
-  const float sensitivity = .00001f;
+  const float sensitivity = .002f;
+  const float speed = 2.f;
   {
     _glfwInput.bind(_display._window);
 
-    // Generate editor camera controls
-    //   this should be probably moved to editor.cpp  in future
-    arete::input::ActionMap cameraActionMap;
-
-    auto * move = cameraActionMap.createAction<glm::vec3>("move");
-    auto * look = cameraActionMap.createAction<glm::vec3>("look");
+    auto * move = cameraActionMap.createAction<glm::vec3>("move", arete::input::Composite::VALUE);
+    auto * look = cameraActionMap.createAction<glm::vec3>("look", arete::input::Composite::DELTA);
     auto * drag = cameraActionMap.createAction<bool>("drag");
     
-    move->mapInput(
-      std::vector<arete::input::InputMapping<glm::vec3>> {
-        {
-          .inputKey = arete::input::InputKey::KEY_W,
-          .axis = glm::vec3(0, 0, 1)
-        },
-        {
-          .inputKey = arete::input::InputKey::KEY_A,
-          .axis = glm::vec3(1, 0, 0)
-        },
-        {
-          .inputKey = arete::input::InputKey::KEY_S,
-          .axis = glm::vec3(0, 0, -1)
-        },
-        {
-          .inputKey = arete::input::InputKey::KEY_D,
-          .axis = glm::vec3(-1, 0, 0)
-        },
-        {
-          .inputKey = arete::input::InputKey::KEY_E,
-          .axis = glm::vec3(0, 1, 0)
-        },
-        {
-          .inputKey = arete::input::InputKey::KEY_Q,
-          .axis = glm::vec3(0, -1, 0)
-        }
+    move->mapInput(std::vector<arete::input::InputMapping<glm::vec3>> {
+      {
+        .inputKey = arete::input::InputKey::KEY_W,
+        .axis = glm::vec3(0, 0, 1)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEY_A,
+        .axis = glm::vec3(1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEY_S,
+        .axis = glm::vec3(0, 0, -1)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEY_D,
+        .axis = glm::vec3(-1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEY_E,
+        .axis = glm::vec3(0, 1, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEY_Q,
+        .axis = glm::vec3(0, -1, 0)
       }
-    );
+    });
 
     move->performed = [&](const auto & event, const auto value) {
       cameraMoveInput = value;
     };
 
-    look->mapInput(
-      std::vector<arete::input::InputMapping<glm::vec3>> {
-        {
-          .inputKey = arete::input::InputKey::MOUSE_MOVE_X,
-          .axis = glm::vec3(1, 0, 0)
-        },
-        {
-          .inputKey = arete::input::InputKey::MOUSE_MOVE_Y,
-          .axis = glm::vec3(0, 1, 0)
-        }
+    look->mapInput(std::vector<arete::input::InputMapping<glm::vec3>> {
+      {
+        .inputKey = arete::input::InputKey::MOUSE_POS_X,
+        .axis = glm::vec3(1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::MOUSE_POS_Y,
+        .axis = glm::vec3(0, 1, 0)
       }
-    );
+    });
 
     look->performed = [&](const auto & event, const auto value) {
-      std::cout << value.x << ", " << value.y << "\n";
+			// printf("(%d, %d)\n", static_cast<int>(value.x), static_cast<int>(value.y));
+
       if (cameraDragInput)
       {
+        std::cout << value.x << ", " << value.y << "\n";
         cameraLookInput.x += value.x * sensitivity;
 
         // reset horizontal rotation around Y axis if rotation was more then 360
         // to prevent float overflow, that -.5f is for floor rounding
         float pi = glm::pi<float>();
-        int test = static_cast<int>(cameraLookInput.x - .5f) / 2 * pi;
+        int test = static_cast<int>((cameraLookInput.x / pi * 360) - .5f) / 360;
         if (glm::abs(test) > 0)
         {
           cameraLookInput.x -= test * 2 * pi;
         }
         
         // clamp vertical rotation around local X axis
-        cameraLookInput.y = glm::clamp(cameraLookInput.y + value.y * sensitivity, -pi / 2.0001f, pi / 2.0001f);
+        cameraLookInput.y = glm::clamp(cameraLookInput.y - value.y * sensitivity, -pi / 2.0001f, pi / 2.0001f);
       }
     };
 
-    drag->mapInput(
-      std::vector<arete::input::InputMapping<bool>> {
-        {
-          .inputKey = arete::input::InputKey::MOUSE_LEFT,
-        }
+    drag->mapInput(std::vector<arete::input::InputMapping<bool>> {
+      {
+        .inputKey = arete::input::InputKey::MOUSE_LEFT,
       }
-    );
+    });
 
     drag->performed = [&](const auto & event, const auto value) {
       cameraDragInput = value;
     };
+  
+    cameraActionMap.bind(_glfwInput);
   }
 
-  
+
+  // Context and In Flight Rendering
   const auto& mesh = getMesh(_mesh._mesh);
   _mesh.indexBuffer(
     _renderer._device,
@@ -292,7 +289,7 @@ void VulkanEngine::run()
 
   InFlightRendering rendering(_renderer, *this);
 
-  
+  // Engine ticking
   arete::TickClock tickClock(0);
   arete::TickClock physicsTickClock(60);
   tickClock.setStartPoint();
@@ -309,7 +306,7 @@ void VulkanEngine::run()
     {
       // update
 
-      cam.pos += (cameraMoveInput * cam.rot) * deltaTime; // deltaTime
+      cam.pos += (cameraMoveInput * cam.rot) * deltaTime * speed;
       if (cameraDragInput)
       {
         cam.rot = 
