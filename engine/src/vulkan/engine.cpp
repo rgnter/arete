@@ -122,58 +122,83 @@ namespace vulkan
 
 void VulkanEngine::run()
 {
+  // Initialize camera
   struct Camera {
     // Selfie / Position camera at the front of cube
     glm::vec3 pos { 0, 0, 6.0f };
     glm::quat rot { 1.0f, 0, 0, 0 };
   } cam;
-
-  _pushConstants.proj = glm::perspective(
-    glm::radians<float>(45.0f),
-    static_cast<float>(_display.width) / static_cast<float>(_display.height),
-    0.1f,
-    100.0f
-  );
-
-  _pushConstants.model = glm::mat4x4( 1.0f );
-
-  // Changing camera orientation example
   cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
 
-  // Selfie / Look from front of the cube at 0,0,0
-  _pushConstants.view = glm::lookAt(
-    cam.pos,
-    cam.pos + glm::vec3(0, 0, 1) * cam.rot,
-    glm::vec3(0, 1, 0) * cam.rot
-  );
-
-  _pushConstants.clip = glm::mat4x4(
-    1.0f,  0.0f, 0.0f, 0.0f,
-    0.0f, -1.0f, 0.0f, 0.0f,
-    0.0f,  0.0f, 0.5f, 0.0f,
-    0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
-
-  _display.setup(_renderer);
-
-  _glfwInput.setup(_display._window);
-
-  // auto & actionMap = _glfwInput.createActionMap();
-
-  // auto & action2 = actionMap.createAction(DataType::1D, );
-  // auto & action2 = actionMap.createAction(DataType::2D);
-
-  // action.AddKey(Key, )
-
-  //! Generate editor camera controls
-  //!   this should be probably moved to editor.cpp  in future
-  arete::input::InputAction<glm::vec3> editorCameraMoveAction;
-  arete::input::InputAction<glm::vec3> editorCameraLookAction;
-  arete::input::InputAction<bool> editorCameraDragAction;
-  glm::vec3 cameraMoveInput(0);
-  glm::vec3 cameraLookInput(0);
-  bool cameraDragInput = false;
+  // Initialize push constants
   {
-    editorCameraMoveAction.mapInput(
+    _pushConstants.proj = glm::perspective(
+      glm::radians<float>(45.0f),
+      static_cast<float>(_display.width) / static_cast<float>(_display.height),
+      0.1f,
+      100.0f
+    );
+
+    _pushConstants.model = glm::mat4x4( 1.0f );
+    
+
+    // Selfie / Look from front of the cube at 0,0,0
+    _pushConstants.view = glm::lookAt(
+      cam.pos,
+      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+      glm::vec3(0, 1, 0) * cam.rot
+    );
+
+    _pushConstants.clip = glm::mat4x4(
+      1.0f,  0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f,  0.0f, 0.5f, 0.0f,
+      0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
+  }
+
+  // Initialize renderer
+  {
+    _display.setup(_renderer);
+
+    _renderer.setup();
+    _renderer.surface(_display._window);
+    _renderer.physicalDevice();
+    _renderer.logicalDevice();
+
+    _renderer.shaders(*this);
+
+    _renderer.swapChain();
+
+    _renderer.depthBuffer();
+    _renderer.uniformBuffer();
+
+    _renderer.renderPass();
+
+    _renderer.framebuffers();
+
+    _renderer.pipeline();
+
+    _renderer.commands();
+  }
+
+
+  // Initialize input
+  glm::vec3 cameraMoveInput(0);
+  glm::vec2 cameraLookInput(0);
+  bool cameraDragInput = false;
+  const float sensitivity = .00001f;
+  {
+    _glfwInput.bind(_display._window);
+
+    // Generate editor camera controls
+    //   this should be probably moved to editor.cpp  in future
+    arete::input::ActionMap cameraActionMap;
+
+    auto * move = cameraActionMap.createAction<glm::vec3>("move");
+    auto * look = cameraActionMap.createAction<glm::vec3>("look");
+    auto * drag = cameraActionMap.createAction<bool>("drag");
+    
+    move->mapInput(
       std::vector<arete::input::InputMapping<glm::vec3>> {
         {
           .inputKey = arete::input::InputKey::KEY_W,
@@ -202,11 +227,11 @@ void VulkanEngine::run()
       }
     );
 
-    editorCameraMoveAction.performed = [&](const auto & event, const auto value) {
+    move->performed = [&](const auto & event, const auto value) {
       cameraMoveInput = value;
     };
 
-    editorCameraLookAction.mapInput(
+    look->mapInput(
       std::vector<arete::input::InputMapping<glm::vec3>> {
         {
           .inputKey = arete::input::InputKey::MOUSE_MOVE_X,
@@ -219,11 +244,27 @@ void VulkanEngine::run()
       }
     );
 
-    editorCameraLookAction.performed = [&](const auto & event, const auto value) {
-      cameraLookInput = value;
+    look->performed = [&](const auto & event, const auto value) {
+      std::cout << value.x << ", " << value.y << "\n";
+      if (cameraDragInput)
+      {
+        cameraLookInput.x += value.x * sensitivity;
+
+        // reset horizontal rotation around Y axis if rotation was more then 360
+        // to prevent float overflow, that -.5f is for floor rounding
+        float pi = glm::pi<float>();
+        int test = static_cast<int>(cameraLookInput.x - .5f) / 2 * pi;
+        if (glm::abs(test) > 0)
+        {
+          cameraLookInput.x -= test * 2 * pi;
+        }
+        
+        // clamp vertical rotation around local X axis
+        cameraLookInput.y = glm::clamp(cameraLookInput.y + value.y * sensitivity, -pi / 2.0001f, pi / 2.0001f);
+      }
     };
 
-    editorCameraDragAction.mapInput(
+    drag->mapInput(
       std::vector<arete::input::InputMapping<bool>> {
         {
           .inputKey = arete::input::InputKey::MOUSE_LEFT,
@@ -231,31 +272,12 @@ void VulkanEngine::run()
       }
     );
 
-    editorCameraDragAction.performed = [&](const auto & event, const auto value) {
+    drag->performed = [&](const auto & event, const auto value) {
       cameraDragInput = value;
     };
   }
 
-  _renderer.setup();
-  _renderer.surface(_display._window);
-  _renderer.physicalDevice();
-  _renderer.logicalDevice();
-
-  _renderer.shaders(*this);
-
-  _renderer.swapChain();
-
-  _renderer.depthBuffer();
-  _renderer.uniformBuffer();
-
-  _renderer.renderPass();
-
-  _renderer.framebuffers();
-
-  _renderer.pipeline();
-
-  _renderer.commands();
-
+  
   const auto& mesh = getMesh(_mesh._mesh);
   _mesh.indexBuffer(
     _renderer._device,
@@ -270,11 +292,6 @@ void VulkanEngine::run()
 
   InFlightRendering rendering(_renderer, *this);
 
-  float rotationY = 0;
-  float rotationX = 0;
-  auto uniform = reinterpret_cast<glm::mat4x4*>(
-    _renderer._uniformBufferMemory.mapMemory(0, sizeof(glm::mat4x4)));
-
   
   arete::TickClock tickClock(0);
   arete::TickClock physicsTickClock(60);
@@ -287,61 +304,32 @@ void VulkanEngine::run()
   {
     _glfwInput.processInput();
 
-    // rotationY = 0;
-    // rotationX = 0;
-
-    // if(glfwGetKey(_display._window, GLFW_KEY_RIGHT) == GLFW_TRUE)
-    // {
-    //   rotationY = -glm::radians<float>(1);
-    // }
-    // else if(glfwGetKey(_display._window, GLFW_KEY_LEFT) == GLFW_TRUE)
-    // {
-    //   rotationY = glm::radians<float>(1);
-    // }
-
-    // if(glfwGetKey(_display._window, GLFW_KEY_UP) == GLFW_TRUE)
-    // {
-    //   rotationX = -glm::radians<float>(1);
-    // }
-    // else if(glfwGetKey(_display._window, GLFW_KEY_DOWN) == GLFW_TRUE)
-    // {
-    //   rotationX = glm::radians<float>(1);
-    // }
-
-    // if (rotationY)
-    //   _pushConstants.model = glm::rotate(_pushConstants.model, rotationY, {0,1,0});
-    // if (rotationX)
-    //   _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
-
-    cam.pos += (cameraMoveInput * cam.rot) * 0.01f; // deltaTime
-    if (cameraDragInput)
-    {
-      cam.rot *= 
-        glm::angleAxis(cameraLookInput.x, glm::vec3(0, 1, 0))
-        *
-        glm::angleAxis(cameraLookInput.y, glm::vec3(1, 0, 0))
-      ;
-    }
-    
-    _pushConstants.view = glm::lookAt(
-      cam.pos,
-      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
-      glm::vec3(0, 1, 0) * cam.rot
-    );
-
-
     // tick
     if (tickClock.tick(deltaTime))
     {
       // update
-      // std::cout << deltaTime << "\n";
+
+      cam.pos += (cameraMoveInput * cam.rot) * deltaTime; // deltaTime
+      if (cameraDragInput)
+      {
+        cam.rot = 
+          glm::angleAxis(cameraLookInput.y, glm::vec3(1, 0, 0))
+          *
+          glm::angleAxis(cameraLookInput.x, glm::vec3(0, 1, 0))
+        ;
+      }
+      
+      _pushConstants.view = glm::lookAt(
+        cam.pos,
+        cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+        glm::vec3(0, 1, 0) * cam.rot
+      );
     }
     
     // physicsTick
     if (physicsTickClock.tick(physicsDeltaTime))
     {
-      // update
-      std::cout << physicsDeltaTime << "\n";
+      // physics update
     }
 
     rendering.draw();

@@ -1,72 +1,76 @@
 #include "arete/vulkan.hpp"
 #include "arete/input/glfwInput.hpp"
 
+#include <iostream>
+
 namespace arete::input
 {
 
-void GlfwInput::setup(GLFWwindow * window)
+void GlfwInput::bind(GLFWwindow * window)
 {
-    // glfwSetWindowUserPointer(window, this);
+    glfwSetWindowUserPointer(window, this);
 
-	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
-	{
-		// if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
-		// {
-			float value = 0.f;
-			switch (action) {
-				case GLFW_PRESS:
-				case GLFW_REPEAT:
-					value = 1.f;
-				break;
-				default:
-					value = 0.f;
+	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+		if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
+		{
+			if (auto * device = input->getDevice(InputDeviceType::KEYBOARD, 0))
+			{
+				float value = 0.f;
+				switch (action) {
+					case GLFW_PRESS:
+					case GLFW_REPEAT:
+						value = 1.f;
+					break;
+					default:
+						value = 0.f;
+				}
+
+				device->addToNewStateBuffer(GlfwInput::keyToInputKey(key), InputDeviceState(value));
 			}
-
-			Input::tryAddToNewStateBufferOfDevice(
-				InputDeviceType::KEYBOARD, 0,
-				GlfwInput::keyToInputKey(key),
-				InputDeviceState(value)
-			);
-		// }
+		}
 	});
 
-	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
-	{
-		// if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
-		// {
-			Input::tryAddToNewStateBufferOfDevice(
-				InputDeviceType::MOUSE, 0,
-				GlfwInput::mouseButtonToInputKey(button),
-				InputDeviceState(action == GLFW_PRESS ? 1.f : 0.f)
-			);
-		// }
+	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
+		if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
+		{
+			if (auto * device = input->getDevice(InputDeviceType::KEYBOARD, 0))
+			{
+				device->addToNewStateBuffer(
+					GlfwInput::mouseButtonToInputKey(button),
+					InputDeviceState(action == GLFW_PRESS ? 1.f : 0.f)
+				);
+			}
+		}
 	});
 
-	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos){
-		double deltaX = xPos - _mouseX;
-		double deltaY = yPos - _mouseY;
-		_mouseX = xPos;
-		_mouseY = yPos;
-		Input::tryAddToNewStateBufferOfDevice(
-			InputDeviceType::MOUSE, 0,
-			InputKey::MOUSE_MOVE_X,
-			InputDeviceState(deltaX)
-		);
-		Input::tryAddToNewStateBufferOfDevice(
-			InputDeviceType::MOUSE, 0,
-			InputKey::MOUSE_MOVE_Y,
-			InputDeviceState(deltaY)
-		);
-		Input::tryAddToNewStateBufferOfDevice(
-			InputDeviceType::MOUSE, 0,
-			InputKey::MOUSE_POS_X,
-			InputDeviceState(xPos)
-		);
-		Input::tryAddToNewStateBufferOfDevice(
-			InputDeviceType::MOUSE, 0,
-			InputKey::MOUSE_POS_Y,
-			InputDeviceState(yPos)
-		);
+	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos) {
+		if (auto * input = static_cast<GlfwInput*>(glfwGetWindowUserPointer(window)))
+		{
+			double deltaX = xPos - input->_mouseX;
+			double deltaY = yPos - input->_mouseY;
+			std::cout << "devicePos: " << xPos << ", " << yPos << "\n" << "deviceDelta: " << deltaX << ", " << deltaY << "\n";;
+			input->_mouseX = xPos;
+			input->_mouseY = yPos;
+			if (auto * device = input->getDevice(InputDeviceType::KEYBOARD, 0))
+			{
+				device->addToNewStateBuffer(
+					InputKey::MOUSE_MOVE_X,
+					InputDeviceState(deltaX)
+				);
+				device->addToNewStateBuffer(
+					InputKey::MOUSE_MOVE_Y,
+					InputDeviceState(deltaY)
+				);
+				device->addToNewStateBuffer(
+					InputKey::MOUSE_POS_X,
+					InputDeviceState(xPos)
+				);
+				device->addToNewStateBuffer(
+					InputKey::MOUSE_POS_Y,
+					InputDeviceState(yPos)
+				);
+			}
+		}
 	});
 
 	// glfwSetJoystickCallback([](int joystickId, int event) {
@@ -88,8 +92,8 @@ void GlfwInput::setup(GLFWwindow * window)
 
 
 	// register input devices
-	Input::registerDevice(Input::InputDevice(InputDeviceType::KEYBOARD, 0));
-	Input::registerDevice(Input::InputDevice(InputDeviceType::MOUSE, 0));
+	registerDevice(InputDevice(InputDeviceType::KEYBOARD, 0));
+	registerDevice(InputDevice(InputDeviceType::MOUSE, 0));
 
     // for (int i = 0; i <= GLFW_JOYSTICK_LAST; i++) {
 	// 	if (glfwJoystickPresent(i)) {		

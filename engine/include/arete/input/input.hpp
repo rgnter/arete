@@ -72,12 +72,19 @@ template<typename T>
 struct InputMapping;
 
 template<>
-struct InputMapping<bool> {
+struct InputMapping<bool>
+{
+    // void receiveFromDevice(float value, bool & actionValue, int & actionActiveMappings);
+
     InputKey inputKey;
 };
 
 template<>
-struct InputMapping<glm::vec3> {
+struct InputMapping<glm::vec3>
+{
+
+    // void receiveFromDevice(float value, glm::vec3 & actionValue, int & actionActiveMappings);
+
     InputKey inputKey;
     glm::vec3 axis;
 };
@@ -89,34 +96,153 @@ struct InputMapping<glm::vec3> {
 template<typename T>
 class InputAction
 {
+
 public:
     struct CallbackContext {
 
     };
+
+    using T_typeName = T;
+    using InputMappingTemplated = InputMapping<T_typeName>;
+    using ActionCallback = std::function<void(CallbackContext&, T_typeName)>;
+
 
     InputAction() {}
     InputAction(const std::string & Name) : name(Name) {}
 
     //! MapInput Maps input to device callbacks based on input mapping parameter
     //! @param inputMappings mapping of input for this action
-    void mapInput(
-        std::vector<InputMapping<T>> inputMappings
-    );
+    void mapInput(std::vector<InputMappingTemplated> inputMappings)
+    {
+        _inputMappings = inputMappings;
+        for (auto & inputMapping : _inputMappings)
+        {
+            auto & lambda = _inputLambdas.emplace_back(
+                [&](float value) {
+                    // inputMapping.receiveFromDevice(value);
+                }
+            );
+        }
+    }
 
-    template<typename T>
-    using ActionCallback = std::function<void(CallbackContext&, T)>;
-
-    ActionCallback<T> started;
-    ActionCallback<T> performed;
-    ActionCallback<T> canceled;
+    ActionCallback started;
+    ActionCallback performed;
+    ActionCallback canceled;
 
     std::string name;
 
-    
 protected:
-    T _value;
 
-    std::vector<InputMapping<T>> _inputMappings;
+    T_typeName _value = T_typeName();
+
+    std::vector<InputMappingTemplated> _inputMappings;
+    std::vector<std::function<void(float)>> _inputLambdas;
+
+    bool _started = false;
+    int _activeInputs = 0;
+};
+
+template<>
+class InputAction<bool>
+{
+
+public:
+    struct CallbackContext {
+
+    };
+
+    using T_typeName = bool;
+    using InputMappingTemplated = InputMapping<T_typeName>;
+    using ActionCallback = std::function<void(CallbackContext&, T_typeName)>;
+
+
+    InputAction() {}
+    InputAction(const std::string & Name) : name(Name) {}
+
+    //! MapInput Maps input to device callbacks based on input mapping parameter
+    //! @param inputMappings mapping of input for this action
+    void mapInput(std::vector<InputMappingTemplated> inputMappings)
+    {
+        _inputMappings = inputMappings;
+        for (auto & inputMapping : _inputMappings)
+        {
+            auto & lambda = _inputLambdas.emplace_back(
+                [&](float value) {
+                    // inputMapping.receiveFromDevice(value);
+                }
+            );
+            // Input::tryRegisterListenerOfDevice(
+            //     getInputDeviceTypeFromKey(inputMapping.inputKey),
+            //     0, inputMapping.inputKey, lambda
+            // );
+        }
+    }
+
+    ActionCallback started;
+    ActionCallback performed;
+    ActionCallback canceled;
+
+    std::string name;
+
+protected:
+
+    T_typeName _value = T_typeName();
+
+    std::vector<InputMappingTemplated> _inputMappings;
+    std::vector<std::function<void(float)>> _inputLambdas;
+
+    bool _started = false;
+    int _activeInputs = 0;
+};
+
+template<>
+class InputAction<glm::vec3>
+{
+
+public:
+    struct CallbackContext {
+
+    };
+
+    using T_typeName = glm::vec3;
+    using InputMappingTemplated = InputMapping<T_typeName>;
+    using ActionCallback = std::function<void(CallbackContext&, T_typeName)>;
+    
+    
+    InputAction() {}
+    InputAction(const std::string & Name) : name(Name) {}
+
+    //! MapInput Maps input to device callbacks based on input mapping parameter
+    //! @param inputMappings mapping of input for this action
+    void mapInput(std::vector<InputMappingTemplated> inputMappings)
+    {
+        _inputMappings = inputMappings;
+        for (auto & inputMapping : _inputMappings)
+        {
+            auto & lambda = _inputLambdas.emplace_back(
+                [&](float value) {
+                    // inputMapping.receiveFromDevice(value);
+                }
+            );
+            // Input::tryRegisterListenerOfDevice(
+            //     getInputDeviceTypeFromKey(inputMapping.inputKey),
+            //     0, inputMapping.inputKey, lambda
+            // );
+        }
+    }
+
+    ActionCallback started;
+    ActionCallback performed;
+    ActionCallback canceled;
+
+    std::string name;
+
+protected:
+
+    T_typeName _value = T_typeName(0);
+
+    std::vector<InputMappingTemplated> _inputMappings;
+    std::vector<std::function<void(float)>> _inputLambdas;
 
     bool _started = false;
     int _activeInputs = 0;
@@ -131,18 +257,8 @@ public:
     using Mapping = std::unordered_map<std::string, InputAction<T>>;
 
     template<typename T>
-    void mapInput(
-        const std::string & actionName,
-        std::vector<InputMapping<T>> inputMappings
-    );
-    template<typename T>
-    void mapInput(
-        const std::string & actionName,
-        InputMapping<T> inputMapping
-    );
+    InputAction<T> * createAction(const std::string & actionName);    
 
-    template<typename T>
-    bool getOrAddAction(const std::string & actionName, InputAction<T> & inputAction);
     template<typename T>
     InputAction<T> * getAction(const std::string & actionName);
 
@@ -156,13 +272,10 @@ private:
 
 // Input / Input Device
 
-static InputDeviceType getInputDeviceTypeFromKey(InputKey key);
+InputDeviceType getInputDeviceTypeFromKey(InputKey key);
 
 class Input
 {
-friend InputAction<glm::vec3>;
-friend InputAction<bool>;
-
 public:
     struct InputDeviceState {
         float value { -99.f };
@@ -204,22 +317,24 @@ public:
     using DeviceIndex = int;
     using DeviceMap = std::unordered_map<InputDeviceType, std::unordered_map<DeviceIndex, InputDevice>>;
 
-    static void registerDevice(const InputDevice& device);
-	static void removeDevice(InputDeviceType type, int index);
+    void registerDevice(const InputDevice& device);
+	void removeDevice(InputDeviceType type, int index);
 
     virtual void processInput();
 
-protected:
-    static bool tryAddToNewStateBufferOfDevice(InputDeviceType type, int index, InputKey key, InputDeviceState value);
-    static bool tryRegisterListenerOfDevice(InputDeviceType type, int index, InputKey key, Callback callback);
+    void activate(ActionMap inputActionMap);
 
-    static double _mouseX;
-    static double _mouseY;
+protected:
+    InputDevice * getDevice(InputDeviceType type, int index);
+
+    std::vector<ActionMap> _activeMaps;
+    double _mouseX;
+    double _mouseY;
 
 private:
-    static bool containsDevice(InputDeviceType deviceType, int deviceIndex);
+    bool containsDevice(InputDeviceType deviceType, int deviceIndex);
 
-    static DeviceMap _devices;
+    DeviceMap _devices;
 };
 
 

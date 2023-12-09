@@ -49,182 +49,163 @@ InputDeviceType getInputDeviceTypeFromKey(InputKey key)
 
 
 
+// Input Mapping
+
+
+
+
 // Input Action - Input Action registered to devices callbacks
 
-void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisMappings)
-{
-    _inputMappings = axisMappings;
-    for (auto & inputMapping : _inputMappings)
-    {
-        Input::tryRegisterListenerOfDevice(
-            getInputDeviceTypeFromKey(inputMapping.inputKey), 0, inputMapping.inputKey, 
-            [&](float value) {
-                if (value == 1)
-                {
-                    _activeInputs++;
 
-                    if (!_started)
-                    {
-                        _value = glm::vec3(0);
-                        _value += inputMapping.axis;
+// void InputAction<glm::vec3>::mapInput(std::vector<InputMapping<glm::vec3>> axisMappings)
+// {
+//     _inputMappings = axisMappings;
+//     for (auto & inputMapping : _inputMappings)
+//     {
+//         Input::tryRegisterListenerOfDevice(
+//             getInputDeviceTypeFromKey(inputMapping.inputKey), 0, inputMapping.inputKey, 
+//             [&](float value) {
+//                 if (value != 0)
+//                 {
+//                     _activeInputs++;
 
-                        if (started)
-                        {
-                            CallbackContext ctx;
-                            started(ctx, _value);
-                        }
-                        _started = true;
-                    }
-                    else
-                    {
-                        _value += inputMapping.axis;
-                    }
+//                     if (!_started)
+//                     {
+//                         _value = glm::vec3(0);
+//                         _value += inputMapping.axis * value;
 
-                    if (performed)
-                    {
-                        CallbackContext ctx;
-                        performed(ctx, _value);
-                    }
-                }
-                else
-                {
-                    _activeInputs--;
+//                         if (started)
+//                         {
+//                             CallbackContext ctx;
+//                             started(ctx, _value);
+//                         }
+//                         _started = true;
+//                     }
+//                     else
+//                     {
+//                         _value += inputMapping.axis * value;
+//                     }
 
-                    _value -= inputMapping.axis;
+//                     if (performed)
+//                     {
+//                         CallbackContext ctx;
+//                         performed(ctx, _value);
+//                     }
+//                 }
+//                 else
+//                 {
+//                     _activeInputs--;
 
-                    if (!_started)
-                    {
-                        if (started)
-                        {
-                            CallbackContext ctx;
-                            started(ctx, _value);
-                        }
-                        _started = true;
-                    }
+//                     _value -= inputMapping.axis * value;
 
-                    if (performed)
-                    {
-                        CallbackContext ctx;
-                        performed(ctx, _value);
-                    }
+//                     if (!_started)
+//                     {
+//                         if (started)
+//                         {
+//                             CallbackContext ctx;
+//                             started(ctx, _value);
+//                         }
+//                         _started = true;
+//                     }
 
-                    if (_activeInputs == 0)
-                    {
-                        _value = glm::vec3(0);
-                        if (canceled)
-                        {
-                            CallbackContext ctx;
-                            canceled(ctx, _value);
-                        }
-                        _started = false;
-                    }
-                }
-            }
-        );
-    }
-}
+//                     if (performed)
+//                     {
+//                         CallbackContext ctx;
+//                         performed(ctx, _value);
+//                     }
 
-void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
-{
-    for (auto & buttonMapping : buttonMappings)
-    {
-        Input::tryRegisterListenerOfDevice(
-            getInputDeviceTypeFromKey(buttonMapping.inputKey), 0, buttonMapping.inputKey,
-            [&](float value) {
-                if (value == 1)
-                {
-                    _value = true;
+//                     if (_activeInputs == 0)
+//                     {
+//                         _value = glm::vec3(0);
+//                         if (canceled)
+//                         {
+//                             CallbackContext ctx;
+//                             canceled(ctx, _value);
+//                         }
+//                         _started = false;
+//                     }
+//                 }
+//             }
+//         );
+//     }
+// }
 
-                    if (!_started)
-                    {
-                        if (started)
-                        {
-                            CallbackContext startedCtx;
-                            started(startedCtx, true);
-                        }
-                        _started = true;
-                    }
+// void InputAction<bool>::mapInput(std::vector<InputMapping<bool>> buttonMappings)
+// {
+//     for (auto & buttonMapping : buttonMappings)
+//     {
+//         Input::tryRegisterListenerOfDevice(
+//             getInputDeviceTypeFromKey(buttonMapping.inputKey), 0, buttonMapping.inputKey,
+//             [&](float value) {
+//                 if (value == 1)
+//                 {
+//                     _value = true;
 
-                    if (performed)
-                    {
-                        CallbackContext performedCtx;
-                        performed(performedCtx, true);
-                    }
-                }
-                else
-                {
-                    if (!_started)
-                    {
-                        CallbackContext startedCtx;
-                        started(startedCtx, true);
-                        _started = true;
-                    }
+//                     if (!_started)
+//                     {
+//                         if (started)
+//                         {
+//                             CallbackContext startedCtx;
+//                             started(startedCtx, true);
+//                         }
+//                         _started = true;
+//                     }
 
-                    if (performed)
-                    {
-                        CallbackContext performedCtx;
-                        performed(performedCtx, true);
-                    }
+//                     if (performed)
+//                     {
+//                         CallbackContext performedCtx;
+//                         performed(performedCtx, true);
+//                     }
+//                 }
+//                 else
+//                 {
+//                     if (!_started)
+//                     {
+//                         CallbackContext startedCtx;
+//                         started(startedCtx, true);
+//                         _started = true;
+//                     }
 
-                    _value = false;
+//                     if (performed)
+//                     {
+//                         CallbackContext performedCtx;
+//                         performed(performedCtx, true);
+//                     }
+
+//                     _value = false;
                     
-                    if (canceled)
-                    {
-                        CallbackContext canceledCtx;
-                        canceled(canceledCtx, false);
-                    }
-                    _started = false;
-                }
-            }
-        );
-    } 
-}
+//                     if (canceled)
+//                     {
+//                         CallbackContext canceledCtx;
+//                         canceled(canceledCtx, false);
+//                     }
+//                     _started = false;
+//                 }
+//             }
+//         );
+//     } 
+// }
 
 
 
 // Action Map - Mapping actions
 
 template<typename T>
-void ActionMap::mapInput(const std::string & actionName, std::vector<InputMapping<T>> inputMappings)
+InputAction<T> * ActionMap::createAction(const std::string & actionName)
 {
-    InputAction<T> inputAction;
-    if (getOrAddAction<T>(actionName, inputAction))
-    {
-        inputAction.mapInput(inputMappings);
-    }   
-}
-
-template<typename T>
-void ActionMap::mapInput(const std::string & actionName, InputMapping<T> inputMapping)
-{
-    InputAction<T> & inputAction;
-    if (getOrAddAction<T>(actionName, inputAction))
-    {
-        std::vector<InputMapping<T>> inputMappings;
-        inputMappings.emplace_back(inputMapping);
-        inputAction.mapInput(actionName, inputMappings);
-    }
-}
-
-
-template<typename T>
-bool ActionMap::getOrAddAction(const std::string & actionName, InputAction<T> & inputAction)
-{
-    return false;
+    return nullptr;
 }
 
 template<>
-bool ActionMap::getOrAddAction(const std::string & actionName, InputAction<bool> & inputAction)
+InputAction<bool> * ActionMap::createAction(const std::string & actionName)
 {
-    inputAction = _boolInputActions[actionName];
-    return true;
+    return &_boolInputActions[actionName];
 }
 
 template<>
-bool ActionMap::getOrAddAction(const std::string & actionName, InputAction<glm::vec3> & inputAction)
+InputAction<glm::vec3> * ActionMap::createAction(const std::string & actionName)
 {
-    inputAction = _vectorInputActions[actionName];
-    return true;
+    return &_vectorInputActions[actionName];
 }
 
 
@@ -327,13 +308,6 @@ void Input::InputDevice::pushAndCapture(DeviceStateMap & capture)
 }
 
 
-
-// Input - Handling input devices
-
-Input::DeviceMap Input::_devices;
-double Input::_mouseX;
-double Input::_mouseY;
-
 void Input::registerDevice(const InputDevice& device)
 {
     _devices[device.type].emplace(device.index, device);
@@ -370,25 +344,18 @@ void Input::processInput()
     }
 }
 
-
-bool Input::tryAddToNewStateBufferOfDevice(InputDeviceType type, int index, InputKey key, InputDeviceState value)
+void Input::activate(ActionMap inputActionMap)
 {
-    if (containsDevice(type, index))
-    {
-        _devices[type][index].addToNewStateBuffer(key, value);
-        return true;
-    }
-    return false;
+    
 }
 
-bool Input::tryRegisterListenerOfDevice(InputDeviceType type, int index, InputKey key, Callback callback)
+Input::InputDevice * Input::getDevice(InputDeviceType type, int index)
 {
     if (containsDevice(type, index))
     {
-        _devices[type][index].registerListener(key, callback);
-        return true;
+        return &_devices[type][index];
     }
-    return false;
+    return nullptr;
 }
 
 bool Input::containsDevice(InputDeviceType type, int index)

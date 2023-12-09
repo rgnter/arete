@@ -10,7 +10,7 @@ namespace arete::input
 class GlfwInput : public Input
 {
 public:
-    void setup(GLFWwindow * glfwWindow);
+    void bind(GLFWwindow * glfwWindow);
 
     virtual void processInput() override;
 
