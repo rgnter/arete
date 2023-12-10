@@ -2,7 +2,7 @@ include(cmake/resources.cmake)
 find_package(Vulkan REQUIRED)
 
 add_library(engine STATIC
-        src/hcs/spatial/spatial.cpp
+        src/hcs/components/spatial.cpp
         src/core.cpp
         src/vulkan/display.cpp
         src/vulkan/renderer.cpp

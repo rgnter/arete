@@ -65,76 +65,25 @@ int main(int argc, char** argv)
     fragmentShader);
 
   //auto data = readMeshBinary("resources/cube.obj");
-  auto mesh = engine.createMesh(
+  
+  auto cubeMesh = engine.createMesh(
     material,
-    arete::Mesh::Vertices{
-      // FRONT
-       {-0.5f, -0.5f, +0.5f},
-       {+0.5f, -0.5f, +0.5f},
-       {-0.5f, +0.5f, +0.5f},
-       {+0.5f, +0.5f, +0.5f},
+    arete::Mesh::getCubeVertices(),
+    arete::Mesh::getCubeIndices()
+  );
 
-       // BACK
-       {-0.5f, -0.5f, -0.5f},
-       {+0.5f, -0.5f, -0.5f},
-       {-0.5f, +0.5f, -0.5f},
-       {+0.5f, +0.5f, -0.5f},
+  // arete::Mesh::Vertices planeVerts = arete::Mesh::getPlaneVertices();
+  // for (auto & vertex : planeVerts)
+  // {
+  //   vertex -= arete::Mesh::VertexElementType(0, 1, 0);
+  // }
+  // auto planeMesh = engine.createMesh(
+  //   material,
+  //   planeVerts,
+  //   arete::Mesh::getPlaneIndices()
+  // );
 
-       // RIGHT
-       {+0.5f, -0.5f, -0.5f},
-       {+0.5f, -0.5f, +0.5f},
-       {+0.5f, +0.5f, -0.5f},
-       {+0.5f, +0.5f, +0.5f},
-
-       // LEFT
-       {-0.5f, -0.5f, -0.5f},
-       {-0.5f, -0.5f, +0.5f},
-       {-0.5f, +0.5f, -0.5f},
-       {-0.5f, +0.5f, +0.5f},
-
-       // TOP
-       {-0.5f, +0.5f, -0.5f},
-       {+0.5f, +0.5f, -0.5f},
-       {-0.5f, +0.5f, +0.5f},
-       {+0.5f, +0.5f, +0.5f},
-
-       // BOTTOM
-       {-0.5f, -0.5f, -0.5f},
-       {+0.5f, -0.5f, -0.5f},
-       {-0.5f, -0.5f, +0.5f},
-       {+0.5f, -0.5f, +0.5f},
-    },
-    arete::Mesh::Indices {
-      // FRONT bottom-left
-        {2, 1, 0},
-        // FRONT upper-right
-        {1, 2, 3},
-
-        // BACK
-        {6, 4, 5},
-        // BACK
-        {5, 7, 6},
-
-        // RIGHT
-        {10, 8, 9},
-        // RIGHT
-        {9, 11, 10},
-
-        // LEFT
-        {14, 13, 12},
-        // LEFT
-        {13, 14, 15},
-
-        // TOP
-        {18, 16, 17},
-        // TOP
-        {17, 19, 18},
-
-        // BOTTOM
-        {22, 21, 20},
-        // BOTTOM
-        {21, 22, 23}
-    });
+  
 
   /*
     //! Player input component.

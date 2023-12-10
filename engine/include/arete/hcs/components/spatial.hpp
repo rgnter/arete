@@ -14,9 +14,6 @@ class SpatialComponent
   : public BehaviourComponentBase {
 
 public:
-  inline virtual void HandleInput(float value, int key);
-
-public:
   SpatialComponent& translate();
   SpatialComponent& rotate();
 
