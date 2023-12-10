@@ -5,6 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <iostream>
+#include <chrono>
 
 namespace arete
 {
@@ -132,28 +133,35 @@ void VulkanEngine::run()
 
   // Initialize push constants
   {
-    _pushConstants.proj = glm::perspective(
+    _shaderMatrices.proj = glm::perspective(
       glm::radians<float>(45.0f),
       static_cast<float>(_display.width) / static_cast<float>(_display.height),
       0.1f,
       100.0f
     );
 
-    _pushConstants.model = glm::mat4x4( 1.0f );
+    _shaderMatrices.model = glm::mat4x4( 1.0f );
     
 
     // Selfie / Look from front of the cube at 0,0,0
-    _pushConstants.view = glm::lookAt(
+    _shaderMatrices.view = glm::lookAt(
       cam.pos,
       cam.pos + glm::vec3(0, 0, 1) * cam.rot,
       glm::vec3(0, 1, 0) * cam.rot
     );
 
-    _pushConstants.clip = glm::mat4x4(
+    _shaderMatrices.clip = glm::mat4x4(
       1.0f,  0.0f, 0.0f, 0.0f,
       0.0f, -1.0f, 0.0f, 0.0f,
       0.0f,  0.0f, 0.5f, 0.0f,
       0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
+
+
+    _pushConstants.time = 0;
+    _pushConstants.model = _shaderMatrices.model; 
+    _pushConstants.mvp = _shaderMatrices.clip * _shaderMatrices.proj * _shaderMatrices.view * _shaderMatrices.model; 
+    // _pushConstantsCore.cameraPos = cam.pos;
+    // _pushConstantsCore.cameraDir = glm::vec3(0, 0, 1) * cam.rot;
   }
 
   // Initialize renderer
@@ -337,6 +345,7 @@ void VulkanEngine::run()
     if (tickClock.tick(deltaTime))
     {
       // update
+      _pushConstants.time += deltaTime;
 
       cam.pos += (cameraMoveInput * cam.rot) * deltaTime * speed;
       if (cameraDragInput)
@@ -348,11 +357,16 @@ void VulkanEngine::run()
         ;
       }
       
-      _pushConstants.view = glm::lookAt(
+      // _pushConstantsCore.cameraPos = cam.pos;
+      // _pushConstantsCore.cameraDir = glm::vec3(0, 0, 1) * cam.rot;
+
+      _shaderMatrices.view = glm::lookAt(
         cam.pos,
         cam.pos + glm::vec3(0, 0, 1) * cam.rot,
         glm::vec3(0, 1, 0) * cam.rot
       );
+
+      _pushConstants.mvp = _shaderMatrices.clip * _shaderMatrices.proj * _shaderMatrices.view * _shaderMatrices.model;
     }
     
     // physicsTick

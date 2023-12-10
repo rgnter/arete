@@ -21,13 +21,27 @@ namespace arete
 
 namespace vkr = vk::raii;
 
-struct PushConstants
+struct ShaderMatrices
 {
   glm::mat4 clip;
   glm::mat4 proj;
   glm::mat4 view;
   glm::mat4 model;
 };
+
+struct PushConstants
+{
+  glm::mat4 mvp;
+  glm::mat4 model;
+  float time;
+};
+// struct PushConstantsCore
+// {
+//   float time;
+//   glm::vec3 cameraPos;
+//   glm::vec3 cameraDir;
+//   float _placeHolder0;
+// };
 
 
 //! Vulkan shader.
@@ -251,6 +265,8 @@ public:
 public:
   arete::VulkanMesh _mesh;
   arete::PushConstants _pushConstants;
+  arete::ShaderMatrices _shaderMatrices;
+  // arete::PushConstantsCore _pushConstantsCore;
 
   VulkanRenderer _renderer;
   Display _display;

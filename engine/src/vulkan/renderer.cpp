@@ -261,9 +261,11 @@ void VulkanRenderer::uniformBuffer()
   _uniformBuffer = vkr::Buffer(
     _device,
     vk::BufferCreateInfo{
-      .size = sizeof(glm::mat4x4),
+      .size = sizeof(arete::ShaderMatrices),
       .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-      .sharingMode = vk::SharingMode::eExclusive});
+      .sharingMode = vk::SharingMode::eExclusive
+    }
+  );
 
   const auto memoryProperties = _physicalDevice.getMemoryProperties();
   const auto memoryRequirements = _uniformBuffer.getMemoryRequirements();
@@ -393,31 +395,43 @@ void VulkanRenderer::shaders(arete::Engine& engine)
 
 void VulkanRenderer::pipeline()
 {
-  const vk::DescriptorSetLayoutBinding uniformDescriptorSetLayoutBinding{
-    .descriptorType = vk::DescriptorType::eUniformBuffer,
-    .descriptorCount = 1,
-    .stageFlags = vk::ShaderStageFlagBits::eVertex};
+  std::array uniformDescriptorSetLayoutBindings {
+    vk::DescriptorSetLayoutBinding {
+      .descriptorType = vk::DescriptorType::eUniformBuffer,
+      .descriptorCount = 1,
+      .stageFlags = vk::ShaderStageFlagBits::eVertex
+    }
+  };
 
   _uniformDescriptorLayout = vkr::DescriptorSetLayout(
     _device,
     vk::DescriptorSetLayoutCreateInfo{
-      .bindingCount = 1,
-      .pBindings = &uniformDescriptorSetLayoutBinding});
+      .bindingCount = uniformDescriptorSetLayoutBindings.size(),
+      .pBindings = uniformDescriptorSetLayoutBindings.data()
+    }
+  );
 
   // Push constants
-  vk::PushConstantRange pushConstantRange {
-    .stageFlags = vk::ShaderStageFlagBits::eVertex,
-    .offset = 0,
-    .size = sizeof(arete::PushConstants)
+  std::array pushConstantRanges {
+    vk::PushConstantRange {
+      .stageFlags = vk::ShaderStageFlagBits::eVertex,
+      .offset = 0,
+      .size = sizeof(arete::PushConstants)
+    },
+    vk::PushConstantRange {
+      .stageFlags = vk::ShaderStageFlagBits::eFragment,
+      .offset = sizeof(arete::PushConstants),
+      .size = sizeof(arete::PushConstants::time)
+    }
   };
 
   _pipelineLayout = vkr::PipelineLayout(
     _device,
     vk::PipelineLayoutCreateInfo{
-      .setLayoutCount = 1,
+      .setLayoutCount = uniformDescriptorSetLayoutBindings.size(),
       .pSetLayouts = &(*_uniformDescriptorLayout),
-      .pushConstantRangeCount = 1,
-      .pPushConstantRanges = &pushConstantRange,
+      .pushConstantRangeCount = pushConstantRanges.size(),
+      .pPushConstantRanges = pushConstantRanges.data(),
     });
 
   // Uniform buffer
@@ -761,12 +775,29 @@ void InFlightRendering::render()
   const auto& pipelineLayout = *_renderer._pipelineLayout;
   const auto& descriptorSet = *_renderer._uniformDescriptorSets.front();
 
+  // commandBuffer.copyBuffer(
+  //   ,
+  // );
+
   commandBuffer.pushConstants(
     pipelineLayout,
     vk::ShaderStageFlagBits::eVertex,
     0,
     vk::ArrayProxy<const arete::PushConstants>({_engine._pushConstants})
   );
+  commandBuffer.pushConstants(
+    pipelineLayout,
+    vk::ShaderStageFlagBits::eFragment,
+    sizeof(const arete::PushConstants),
+    vk::ArrayProxy<const float>({_engine._pushConstants.time})
+  );
+
+  // commandBuffer.pushConstants(
+  //   pipelineLayout,
+  //   vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+  //   sizeof(const arete::PushConstantsMatrices),
+  //   vk::ArrayProxy<const arete::PushConstantsCore>({_engine._pushConstantsCore})
+  // );
 
   commandBuffer.bindDescriptorSets(
     vk::PipelineBindPoint::eGraphics,
