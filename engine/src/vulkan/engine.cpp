@@ -277,7 +277,6 @@ void VulkanEngine::run()
     look->performed = [&](const auto & event, const auto value) {
       if (cameraDragInput)
       {
-        std::cout << value.x << ", " << value.y << "\n";
         cameraLookInput.x += value.x * sensitivity;
 
         // reset horizontal rotation around Y axis if rotation was more then 360

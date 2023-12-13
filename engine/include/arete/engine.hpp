@@ -2,6 +2,7 @@
 #define ARETE_ENGINE_HPP
 
 #include "core.hpp"
+#include "structures/structures.hpp"
 
 #include <vector>
 #include <functional>

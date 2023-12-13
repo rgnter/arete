@@ -11,89 +11,120 @@
 namespace arete
 {
 
-  //! Mesh.
-  class Mesh
+//! Mesh.
+class Mesh
+{
+public:
+  //! Single vertex element type.
+  using VertexElementType = glm::f32vec3;
+  //! Verticies.
+  using Vertices = std::vector<VertexElementType>;
+
+  //! Single index element type.
+  using IndexElementType = glm::u16vec3;
+  //! Indices.
+  using Indices = std::vector<IndexElementType>;
+
+  //! Constructs model with specified material and model data.
+  //! @param material Material handle.
+  //! @param vertices Mesh vertex data.
+  //! @param indices Mesh index data.
+  explicit Mesh(MaterialHandle material,
+                Vertices vertices,
+                Indices indices) noexcept
+    : _vertices(std::move(vertices))
+    , _indices(std::move(indices))
+  {}
+
+  //! @returns Reference to vertices.
+  [[nodiscard]] const Vertices& vertices() const
   {
-  public:
-    //! Single vertex element type.
-    using VertexElementType = glm::f32vec3;
-    //! Verticies.
-    using Vertices = std::vector<VertexElementType>;
 
-    //! Single index element type.
-    using IndexElementType = glm::u16vec3;
-    //! Indices.
-    using Indices = std::vector<IndexElementType>;
+    return _vertices;
+  }
 
-    //! Constructs model with specified material and model data.
-    //! @param material Material handle.
-    //! @param vertices Mesh vertex data.
-    //! @param indices Mesh index data.
-    explicit Mesh(MaterialHandle material,
-                  Vertices vertices,
-                  Indices indices) noexcept
-      : _material(material)
-      , _vertices(std::move(vertices))
-      , _indices(std::move(indices))
-    {}
+  //! @returns Reference to indices.
+  [[nodiscard]] const Indices& indices() const
+  {
+    return _indices;
+  }
 
-    [[nodiscard]] MaterialHandle material() const
-    {
-      return _material;
-    }
+  static const Vertices getCubeVertices()
+  {
+    return {
+      // FRONT
+      {-0.5f, -0.5f, +0.5f},
+      {+0.5f, -0.5f, +0.5f},
+      {-0.5f, +0.5f, +0.5f},
+      {+0.5f, +0.5f, +0.5f},
 
-    //! @returns Reference to vertices.
-    [[nodiscard]] const Vertices& vertices() const
-    {
+      // BACK
+      {-0.5f, -0.5f, -0.5f},
+      {+0.5f, -0.5f, -0.5f},
+      {-0.5f, +0.5f, -0.5f},
+      {+0.5f, +0.5f, -0.5f}
+    };
+  }
 
-      return _vertices;
-    }
+  static const Indices getCubeIndices()
+  {
+    return {
+      // FRONT
+      // FRONT bottom-left
+      {2, 1, 0},
+      // FRONT upper-right
+      {1, 2, 3},
 
-    //! @returns Reference to indices.
-    [[nodiscard]] const Indices& indices() const
-    {
-      return _indices;
-    }
+      // BACK
+      {6, 4, 5},
+      // BACK
+      {5, 7, 6},
 
-    static const Vertices getCubeVertices()
-    {
-      return {
-        // FRONT
-        {-0.5f, -0.5f, +0.5f},
-        {+0.5f, -0.5f, +0.5f},
-        {-0.5f, +0.5f, +0.5f},
-        {+0.5f, +0.5f, +0.5f},
+      // RIGHT
+      {3, 5, 1},
+      // RIGHT
+      {5, 3, 7},
 
-        // BACK
-        {-0.5f, -0.5f, -0.5f},
-        {+0.5f, -0.5f, -0.5f},
-        {-0.5f, +0.5f, -0.5f},
-        {+0.5f, +0.5f, -0.5f}
-      };
-    }
+      // LEFT
+      {6, 0, 4},
+      // LEFT
+      {0, 6, 2},
 
-    static const Indices getCubeIndices()
-    {
-      return {
-        // FRONT
-        // FRONT bottom-left
-        {2, 1, 0},
-        // FRONT upper-right
-        {1, 2, 3},
+      // TOP
+      {6, 3, 2},
+      // TOP
+      {3, 6, 7},
 
-        // BACK
-        {6, 4, 5},
-        // BACK
-        {5, 7, 6}
-      };
-    }
+      // BOTTOM
+      {0, 5, 4},
+      // BOTTOM
+      {5, 0, 1},
+    };
+  }
 
-  private:
-    MaterialHandle _material;
+  static const Vertices getPlaneVertices()
+  {
+    return {
+      // FRONT
+      {-0.5f, 0, -0.5f},
+      {-0.5f, 0, +0.5f},
+      {+0.5f, 0, -0.5f},
+      {+0.5f, 0, +0.5f},
+    };
+  }
 
-    Vertices _vertices;
-    Indices _indices;
-  };
+  static const Indices getPlaneIndices()
+  {
+    return {
+      {2, 1, 0},
+      {1, 2, 3},
+    };
+  }
+
+private:
+  Vertices _vertices;
+  Indices _indices;
+};
 
 } // namespace arete
 

@@ -1,16 +1,19 @@
 #ifndef ARETE_MESH_RENDERER_HPP
 #define ARETE_MESH_RENDERER_HPP
 
-#include "arete/core/core.hpp"
+#include "arete/structures/structures_common.hpp"
 
 namespace arete::components {
 
-class MeshRenderer
+class MeshRenderer : public ComponentDrawable
 {
 
+public:
+    virtual void onDraw() override;
+
 private:
-    std::vector<MeshHandle> _meshes;
-    std::vector<MaterialHandle> _materials;
+    MeshHandle _mesh;
+    MaterialHandle _material;
     
 };
 

@@ -16,27 +16,11 @@
 namespace arete::hcs
 {
 
+//! Actor handle.
+using ActorHandle = uint32_t;
+
 //! ComponentType handle.
 using ComponentHandle = uint32_t;
-
-//! ComponentType base.
-class ComponentBase
-{
-public:
-  virtual void onCreate();
-  virtual void onDelete();
-};
-
-//! Behaviour component base.
-class BehaviourComponentBase
-  : public ComponentBase
-{
-public:
-  virtual ~BehaviourComponentBase() = default;
-
-public:
-  virtual void onTick();
-};
 
 //! System handle.
 using SystemHandle = uint32_t;
@@ -75,26 +59,6 @@ public:
 
 };
 
-//! Actor handle.
-using ActorHandle = uint32_t;
-
-class Actor
-{
-public:
-  template<typename Component>
-  void CreateComponent();
-
-  template<typename Component>
-  void GetComponent();
-
-public:
-  //!
-  virtual void OnCreate();
-
-  //!
-  virtual void OnDestroy();
-};
-
-} // namespace arete::hcs
+}
 
 #endif//ARETE_COMPONENTS_HPP
