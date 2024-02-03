@@ -83,7 +83,6 @@ int main(int argc, char** argv)
   //   arete::Mesh::getPlaneIndices()
   // );
 
-  
 
   /*
     //! Player input component.

@@ -8,6 +8,9 @@ void Display::setup(VulkanRenderer& renderer)
   if (!glfwInit())
     throw std::runtime_error("Couldn't initialize GLFW.");
 
+  if(!glfwVulkanSupported())
+    throw std::runtime_error("Vulkan is not supported");
+
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 

@@ -4,6 +4,7 @@
 #include "arete/engine.hpp"
 
 #define VULKAN_HPP_NO_CONSTRUCTORS
+
 #include <vulkan/vulkan_raii.hpp>
 #include <GLFW/glfw3.h>
 
@@ -50,6 +51,7 @@ struct PushConstants
   glm::mat4 model;
   float time;
 };
+
 // struct PushConstantsCore
 // {
 //   float time;
@@ -234,7 +236,6 @@ private:
   void present();
 
 private:
-  bool _shouldRender;
   const VulkanRenderer& _renderer;
   const VulkanEngine& _engine;
 

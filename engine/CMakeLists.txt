@@ -9,7 +9,8 @@ add_library(engine STATIC
         src/engine.cpp
         src/input/input.cpp
         src/input/glfwInput.cpp
-        src/tickClock.cpp)
+        src/tickClock.cpp
+        include/arete/composer.hpp)
 
 set_target_properties(engine PROPERTIES
         POSITION_INDEPENDENT_CODE ON)

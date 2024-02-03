@@ -7,9 +7,10 @@ namespace vulkan
 
 void VulkanRenderer::surface(GLFWwindow* window)
 {
+
   // Create surface.
   VkSurfaceKHR directSurface;
-  glfwCreateWindowSurface(*_instance, window, nullptr, &directSurface);
+  const auto result = glfwCreateWindowSurface(*_instance, window, nullptr, &directSurface);
   _surface = vkr::SurfaceKHR(_instance, directSurface);
 
   // Swap chain extension for device.
@@ -615,7 +616,6 @@ void VulkanRenderer::setup()
   _extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   _extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
   _layers.emplace_back("VK_LAYER_KHRONOS_validation");
-  _layers.emplace_back("VK_LAYER_RENDERDOC_Capture");
 
   const vk::ApplicationInfo applicationInfo{
     .pApplicationName = "Hello World",
@@ -673,7 +673,7 @@ void VulkanRenderer::setup()
 
 
 InFlightRendering::InFlightRendering(const VulkanRenderer& renderer, const VulkanEngine& engine)
-    : _renderer(renderer), _engine(engine), _shouldRender(true)
+    : _renderer(renderer), _engine(engine)
 {
   const auto& device = _renderer._device;
   // Image available semaphores
@@ -806,7 +806,7 @@ void InFlightRendering::render()
   commandBuffer.pushConstants(
     pipelineLayout,
     vk::ShaderStageFlagBits::eFragment,
-    sizeof(const arete::PushConstants),
+    sizeof(arete::PushConstants),
     vk::ArrayProxy<const float>({_engine._pushConstants.time})
   );
 

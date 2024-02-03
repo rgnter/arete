@@ -84,9 +84,8 @@ protected:
 
 protected:
   Ref<input::Input> _input;
-  
 };
 
 } // namespace arete
 
-#endif//ARETE_ENGINE_HPP
+#endif //ARETE_ENGINE_HPP

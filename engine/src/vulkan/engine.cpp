@@ -329,6 +329,11 @@ void VulkanEngine::run()
   arete::TickClock tickClock(0);
   arete::TickClock physicsTickClock(60);
 
+//  arete::Composer composer;
+//
+//  _physicsSystems.tick();
+//  _drawSystems.tick(composer);
+
   while(!glfwWindowShouldClose(_display._window))
   {
     _glfwInput.processInput();
