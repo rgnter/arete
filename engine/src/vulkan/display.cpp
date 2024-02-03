@@ -12,7 +12,7 @@ void Display::setup(VulkanRenderer& renderer)
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   _window = glfwCreateWindow(
-    width, height, "Title", nullptr, nullptr);
+    width, height, "Arete", nullptr, nullptr);
 
   // Copy GLFW extensions
   uint32_t glfwExtensionCount = 0;

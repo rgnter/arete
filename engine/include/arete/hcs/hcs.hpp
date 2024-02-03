@@ -8,48 +8,57 @@
 #include "arete/core.hpp"
 #include "arete/hcs/arena.hpp"
 
-#include <tuple>
 #include <cstdint>
+#include <atomic>
+#include <vector>
+#include <unordered_map>
 
 namespace arete::hcs
 {
 
-//! Component handle.
+//! Actor handle.
+using ActorHandle = uint32_t;
+
+//! ComponentType handle.
 using ComponentHandle = uint32_t;
 
-//! Component base.
-class ComponentBase
-{
-public:
-  //!
-  virtual void onCreate() = 0;
+//! System handle.
+using SystemHandle = uint32_t;
 
-  //!
-  virtual void onDestroy() = 0;
+
+template<typename T>
+concept Componentable = requires(T a)
+{
+  { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
 };
 
-//! Behaviour component base.
-class BehaviourComponentBase
-  : public ComponentBase
-{
-public:
-  //!
-  virtual void onTick() = 0;
-};
-
-template<class ComponentHandleType, class ComponentType>
+//! System base.
+template<Componentable Component>
 class SystemBase
 {
-private:
-  Arena<ComponentHandleType, ComponentType> _arena;
+protected:
+  ComponentArena<ComponentHandle, Component> _arena;
 
 public:
-  Arena<ComponentHandleType, ComponentType>& arena()
+  //! Creates a component.
+  //! @returns Handle of that component.
+  [[nodsicard]] ComponentHandle createComponent()
   {
-    return _arena;
+    const auto& [handle, ref] = _arena.createComponent();
+    return handle;
   }
+
+  //! Destroys a component.
+  //! @param component ComponentType handle.
+  virtual void destroyComponent(ComponentHandle component) = 0;
+
+  //! Gets component.
+  //! @returns Reference to component.
+  //! @throws std::runtime_exception if no such component is created.
+  [[nodiscard]] virtual Component& getComponent(ComponentHandle component) = 0;
+
 };
 
-} // namespace arete::hcs
+}
 
 #endif//ARETE_COMPONENTS_HPP

@@ -2,14 +2,14 @@ include(cmake/resources.cmake)
 find_package(Vulkan REQUIRED)
 
 add_library(engine STATIC
-        src/hcs/spatial/spatial.cpp
         src/core.cpp
         src/vulkan/display.cpp
         src/vulkan/renderer.cpp
         src/vulkan/engine.cpp
         src/engine.cpp
         src/input/input.cpp
-        src/input/glfwInput.cpp)
+        src/input/glfwInput.cpp
+        src/tickClock.cpp)
 
 set_target_properties(engine PROPERTIES
         POSITION_INDEPENDENT_CODE ON)

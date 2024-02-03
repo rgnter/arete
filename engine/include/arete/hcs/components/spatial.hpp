@@ -1,7 +1,7 @@
 #ifndef SPATIAL_HPP
 #define SPATIAL_HPP
 
-#include "arete/hcs/hcs.hpp"
+#include "component_data.hpp"
 
 #include <glm/vec3.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -11,10 +11,7 @@ namespace arete::hcs
 
 //! Spatial component.
 class SpatialComponent
-  : public BehaviourComponentBase {
-
-public:
-  inline virtual void HandleInput(float value, int key);
+  : public ComponentDataBase {
 
 public:
   SpatialComponent& translate();

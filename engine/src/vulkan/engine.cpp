@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <iostream>
+#include <chrono>
 
 namespace arete
 {
@@ -121,105 +123,197 @@ namespace vulkan
 
 void VulkanEngine::run()
 {
+  // Initialize camera
   struct Camera {
     // Selfie / Position camera at the front of cube
     glm::vec3 pos { 0, 0, 6.0f };
     glm::quat rot { 1.0f, 0, 0, 0 };
   } cam;
-
-  _pushConstants.proj = glm::perspective(
-    glm::radians<float>(45.0f),
-    static_cast<float>(_display.width) / static_cast<float>(_display.height),
-    0.1f,
-    100.0f
-  );
-
-  _pushConstants.model = glm::mat4x4( 1.0f );
-
-  // Changing camera orientation example
   cam.rot = cam.rot * glm::angleAxis(glm::pi<float>(), glm::vec3(0, 1, 0));
 
-  // Selfie / Look from front of the cube at 0,0,0
-  _pushConstants.view = glm::lookAt(
-    cam.pos,
-    cam.pos + glm::vec3(0, 0, 1) * cam.rot,
-    glm::vec3(0, 1, 0) * cam.rot
-  );
+  // Initialize push constants
+  {
+    _shaderMatrices.proj = glm::perspective(
+      glm::radians<float>(45.0f),
+      static_cast<float>(_display.width) / static_cast<float>(_display.height),
+      0.1f,
+      100.0f
+    );
 
-  _pushConstants.clip = glm::mat4x4(
-    1.0f,  0.0f, 0.0f, 0.0f,
-    0.0f, -1.0f, 0.0f, 0.0f,
-    0.0f,  0.0f, 0.5f, 0.0f,
-    0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
+    _shaderMatrices.model = glm::mat4x4( 1.0f );
+    
 
-  _display.setup(_renderer);
+    // Selfie / Look from front of the cube at 0,0,0
+    _shaderMatrices.view = glm::lookAt(
+      cam.pos,
+      cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+      glm::vec3(0, 1, 0) * cam.rot
+    );
 
-  //_glfwInput.setup(_display._window);
+    _shaderMatrices.clip = glm::mat4x4(
+      1.0f,  0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f,  0.0f, 0.5f, 0.0f,
+      0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
 
-  // auto & actionMap = _glfwInput.createActionMap();
 
-  // auto & action2 = actionMap.createAction(DataType::1D, );
-  // auto & action2 = actionMap.createAction(DataType::2D);
+    _pushConstants.time = 0;
+    _pushConstants.model = _shaderMatrices.model; 
+    _pushConstants.mvp = _shaderMatrices.clip * _shaderMatrices.proj * _shaderMatrices.view * _shaderMatrices.model; 
+    // _pushConstantsCore.cameraPos = cam.pos;
+    // _pushConstantsCore.cameraDir = glm::vec3(0, 0, 1) * cam.rot;
+  }
 
-  // action.AddKey(Key, )
+  // Initialize renderer
+  {
+    _display.setup(_renderer);
 
-  // const std::string moveActionName = "Move";
-  // arete::input::InputAction<glm::vec3> moveAction { .name = moveActionName };
-  // moveAction.mapAxis(
-  //   {
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_W,
-  //       .axis = arete::input::Axis::Forward
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_A,
-  //       .axis = arete::input::Axis::Left
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_S,
-  //       .axis = arete::input::Axis::Back
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_D,
-  //       .axis = arete::input::Axis::Right
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_E,
-  //       .axis = arete::input::Axis::Up
-  //     },
-  //     arete::input::AxisMapping {
-  //       .inputKey = arete::input::InputKey::KEY_Q,
-  //       .axis = arete::input::Axis::Down
-  //     }
-  //   }
-  // );
+    _renderer.setup();
+    _renderer.surface(_display._window);
+    _renderer.physicalDevice();
+    _renderer.logicalDevice();
 
-  // link behaviour to action callback
-  // moveAction.performed = [&](const arete::input::InputAction::CallbackContext & ctx){
-  //   glm::vec3 inputValue = ctx.readValue<glm::vec3>();
-  //   cam.pos += inputValue * cam.rot;
-  // };
+    _renderer.shaders(*this);
 
-  _renderer.setup();
-  _renderer.surface(_display._window);
-  _renderer.physicalDevice();
-  _renderer.logicalDevice();
+    _renderer.swapChain();
 
-  _renderer.shaders(*this);
+    _renderer.depthBuffer();
+    _renderer.uniformBuffer();
 
-  _renderer.swapChain();
+    _renderer.renderPass();
 
-  _renderer.depthBuffer();
-  _renderer.uniformBuffer();
+    _renderer.framebuffers();
 
-  _renderer.renderPass();
+    _renderer.pipeline();
 
-  _renderer.framebuffers();
+    _renderer.commands();
+  }
 
-  _renderer.pipeline();
 
-  _renderer.commands();
+  // Initialize input
+  arete::input::ActionMap cameraActionMap;
+  glm::vec3 cameraMoveInput(0);
+  glm::vec3 cameraLookInput(0);
+  bool cameraDragInput = false;
+  const float sensitivity = .002f;
+  const float speed = 2.f;
+  {
+    _glfwInput.bind(_display._window);
 
+    auto angleBetween = [](
+      glm::vec3 a,
+      glm::vec3 b,
+      glm::vec3 origin
+    ) {
+      glm::vec3 da = glm::normalize(a-origin);
+      glm::vec3 db = glm::normalize(b-origin);
+      return glm::acos(glm::dot(da, db));
+    };
+
+    glm::vec3 camForward = glm::vec3(0, 0, 1) * cam.rot;
+    glm::vec3 forwardYPlane = glm::vec3(camForward.x, 0, camForward.z);
+    
+    float yAngle = angleBetween(
+      glm::vec3(0, 0, 1),
+      forwardYPlane,
+      glm::vec3(0)
+    );
+
+    float xAngle = angleBetween(
+      forwardYPlane,
+      camForward,
+      glm::vec3(0)
+    );
+
+    cameraLookInput.x = yAngle;
+    cameraLookInput.y = xAngle;
+
+    auto * move = cameraActionMap.createAction<glm::vec3>("move", arete::input::Composite::VALUE);
+    auto * look = cameraActionMap.createAction<glm::vec3>("look", arete::input::Composite::DELTA);
+    auto * drag = cameraActionMap.createAction<bool>("drag");
+    
+    move->mapInput(std::vector<arete::input::InputMapping<glm::vec3>> {
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_W,
+        .axis = glm::vec3(0, 0, 1)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_A,
+        .axis = glm::vec3(1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_S,
+        .axis = glm::vec3(0, 0, -1)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_D,
+        .axis = glm::vec3(-1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_E,
+        .axis = glm::vec3(0, 1, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::KEYBOARD_Q,
+        .axis = glm::vec3(0, -1, 0)
+      }
+    });
+
+    move->performed = [&](const auto & event, const auto value) {
+      cameraMoveInput = value;
+    };
+
+    look->mapInput(std::vector<arete::input::InputMapping<glm::vec3>> {
+      {
+        .inputKey = arete::input::InputKey::MOUSE_POS_X,
+        .axis = glm::vec3(1, 0, 0)
+      },
+      {
+        .inputKey = arete::input::InputKey::MOUSE_POS_Y,
+        .axis = glm::vec3(0, 1, 0)
+      }
+    });
+
+    look->performed = [&](const auto & event, const auto value) {
+      if (cameraDragInput)
+      {
+        cameraLookInput.x += value.x * sensitivity;
+
+        // reset horizontal rotation around Y axis if rotation was more then 360
+        // to prevent float overflow, that -.5f is for floor rounding
+        float pi = glm::pi<float>();
+        int test = static_cast<int>((cameraLookInput.x / pi * 360) - .5f) / 360;
+        if (glm::abs(test) > 0)
+        {
+          cameraLookInput.x -= test * 2 * pi;
+        }
+        
+        // clamp vertical rotation around local X axis
+        cameraLookInput.y = glm::clamp(cameraLookInput.y - value.y * sensitivity, -pi / 2.0001f, pi / 2.0001f);
+      }
+    };
+
+    drag->mapInput(std::vector<arete::input::InputMapping<bool>> {
+      {
+        .inputKey = arete::input::InputKey::MOUSE_RIGHT,
+      }
+    });
+
+    drag->started = [&](const auto & event, const auto value) {
+      _glfwInput.setMouseMode(arete::input::MouseMode::DISABLED);
+    };
+    drag->performed = [&](const auto & event, const auto value) {
+      cameraDragInput = value;
+    };
+    drag->canceled = [&](const auto & event, const auto value) {
+      _glfwInput.setMouseMode(arete::input::MouseMode::NORMAL);
+    };
+  
+    cameraActionMap.bind(_glfwInput);
+  }
+
+
+  // Context and In Flight Rendering
   const auto& mesh = getMesh(_mesh._mesh);
   _mesh.indexBuffer(
     _renderer._device,
@@ -234,42 +328,51 @@ void VulkanEngine::run()
 
   InFlightRendering rendering(_renderer, *this);
 
-  float rotationY = 0;
-  float rotationX = 0;
-  auto uniform = reinterpret_cast<glm::mat4x4*>(
-    _renderer._uniformBufferMemory.mapMemory(0, sizeof(glm::mat4x4)));
+  // Engine ticking
+  arete::TickClock tickClock(0);
+  arete::TickClock physicsTickClock(60);
+  tickClock.setStartPoint();
+  physicsTickClock.setStartPoint();
+  float deltaTime = 0;
+  float physicsDeltaTime = 0;
 
   while(!glfwWindowShouldClose(_display._window))
   {
-    glfwPollEvents();
-    //_glfwInput.processInput();
+    _glfwInput.processInput();
 
-    rotationY = 0;
-    rotationX = 0;
-
-    if(glfwGetKey(_display._window, GLFW_KEY_RIGHT) == GLFW_TRUE)
+    // tick
+    if (tickClock.tick(deltaTime))
     {
-      rotationY = -glm::radians<float>(1);
-    }
-    else if(glfwGetKey(_display._window, GLFW_KEY_LEFT) == GLFW_TRUE)
-    {
-      rotationY = glm::radians<float>(1);
-    }
+      // update
+      _pushConstants.time += deltaTime;
 
-    if(glfwGetKey(_display._window, GLFW_KEY_UP) == GLFW_TRUE)
-    {
-      rotationX = -glm::radians<float>(1);
-    }
-    else if(glfwGetKey(_display._window, GLFW_KEY_DOWN) == GLFW_TRUE)
-    {
-      rotationX = glm::radians<float>(1);
-    }
+      cam.pos += (cameraMoveInput * cam.rot) * deltaTime * speed;
+      if (cameraDragInput)
+      {
+        cam.rot = 
+          glm::angleAxis(cameraLookInput.y, glm::vec3(1, 0, 0))
+          *
+          glm::angleAxis(cameraLookInput.x, glm::vec3(0, 1, 0))
+        ;
+      }
+      
+      // _pushConstantsCore.cameraPos = cam.pos;
+      // _pushConstantsCore.cameraDir = glm::vec3(0, 0, 1) * cam.rot;
 
-    if (rotationY)
-      _pushConstants.model = glm::rotate(_pushConstants.model, rotationY, {0,1,0});
-    if (rotationX)
-      _pushConstants.model = glm::rotate(_pushConstants.model, rotationX, {1,0,0});
+      _shaderMatrices.view = glm::lookAt(
+        cam.pos,
+        cam.pos + glm::vec3(0, 0, 1) * cam.rot,
+        glm::vec3(0, 1, 0) * cam.rot
+      );
 
+      _pushConstants.mvp = _shaderMatrices.clip * _shaderMatrices.proj * _shaderMatrices.view * _shaderMatrices.model;
+    }
+    
+    // physicsTick
+    if (physicsTickClock.tick(physicsDeltaTime))
+    {
+      // physics update
+    }
 
     rendering.draw();
 
