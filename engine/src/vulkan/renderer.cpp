@@ -879,7 +879,7 @@ void InFlightRendering::present()
     .pSwapchains = &(*swapchain),
     .pImageIndices = &_currentImageIndex};
 
-  const auto& presentQueue = _renderer._presentQueue;]
+  const auto& presentQueue = _renderer._presentQueue;
   const auto result = presentQueue.presentKHR(presentInfoKHR);
   assert(result == vk::Result::eSuccess);
 }
