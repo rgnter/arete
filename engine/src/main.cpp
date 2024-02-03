@@ -150,6 +150,5 @@ int main(int argc, char** argv)
       arete::Ref<arete::hcs::InputComponent> _input;
     };*/
 
-
   engine.run();
 }

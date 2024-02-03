@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <thread>
 #include <iostream>
 #include <chrono>
 
@@ -141,7 +142,6 @@ void VulkanEngine::run()
     );
 
     _shaderMatrices.model = glm::mat4x4( 1.0f );
-    
 
     // Selfie / Look from front of the cube at 0,0,0
     _shaderMatrices.view = glm::lookAt(
@@ -155,7 +155,6 @@ void VulkanEngine::run()
       0.0f, -1.0f, 0.0f, 0.0f,
       0.0f,  0.0f, 0.5f, 0.0f,
       0.0f,  0.0f, 0.5f, 1.0f);  // vulkan clip space has inverted y and half z !
-
 
     _pushConstants.time = 0;
     _pushConstants.model = _shaderMatrices.model; 
@@ -188,7 +187,6 @@ void VulkanEngine::run()
 
     _renderer.commands();
   }
-
 
   // Initialize input
   arete::input::ActionMap cameraActionMap;
@@ -312,7 +310,6 @@ void VulkanEngine::run()
     cameraActionMap.bind(_glfwInput);
   }
 
-
   // Context and In Flight Rendering
   const auto& mesh = getMesh(_mesh._mesh);
   _mesh.indexBuffer(
@@ -331,22 +328,19 @@ void VulkanEngine::run()
   // Engine ticking
   arete::TickClock tickClock(0);
   arete::TickClock physicsTickClock(60);
-  tickClock.setStartPoint();
-  physicsTickClock.setStartPoint();
-  float deltaTime = 0;
-  float physicsDeltaTime = 0;
 
   while(!glfwWindowShouldClose(_display._window))
   {
     _glfwInput.processInput();
 
+    const auto engineTick = tickClock.tick();
     // tick
-    if (tickClock.tick(deltaTime))
+    if (engineTick.shouldTick)
     {
       // update
-      _pushConstants.time += deltaTime;
+      _pushConstants.time += engineTick.deltaTime;
 
-      cam.pos += (cameraMoveInput * cam.rot) * deltaTime * speed;
+      cam.pos += (cameraMoveInput * cam.rot) * engineTick.deltaTime * speed;
       if (cameraDragInput)
       {
         cam.rot = 
@@ -366,12 +360,6 @@ void VulkanEngine::run()
       );
 
       _pushConstants.mvp = _shaderMatrices.clip * _shaderMatrices.proj * _shaderMatrices.view * _shaderMatrices.model;
-    }
-    
-    // physicsTick
-    if (physicsTickClock.tick(physicsDeltaTime))
-    {
-      // physics update
     }
 
     rendering.draw();

@@ -2,37 +2,33 @@
 
 namespace arete {
 
-void TickClock::setStartPoint()
+TickClock::TickClock(float tickPeriod)
+    : tickPeriod(tickPeriod)
+{}
+
+TickClock::Tick TickClock::tick() noexcept
 {
-    currentTime = timer.now();
-    deltaSum = 0;
+  using FloatingPointDuration = std::chrono::duration<
+    float,
+    std::chrono::seconds::period>;
+
+  lastTickTime = curentTickTime;
+  curentTickTime = Clock::now();
+
+  tickTimeDelta = FloatingPointDuration(curentTickTime - lastTickTime).count();
+
+  if (tickPeriod == 0.0f)
+  {
+    return {true, tickTimeDelta};
+  }
+
+  if (tickTimeDelta >= 1/tickPeriod)
+  {
+    tickTimeDelta = 0;
+    return {true, tickTimeDelta};
+  }
+
+  return {false, tickTimeDelta};
 }
 
-bool TickClock::tick(float & deltaTime)
-{
-    lastTime = currentTime;
-    currentTime = timer.now();
-
-    if (target != 0)
-    {
-        deltaSum += std::chrono::duration<float, std::chrono::seconds::period>(
-            currentTime - lastTime
-        ).count();
-
-        if (deltaSum >= 1/target)
-        {
-            deltaTime = deltaSum;
-            deltaSum = 0;
-            return true;
-        }
-
-        return false;
-    }
-
-    deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(
-        currentTime - lastTime
-    ).count();
-    return true;
-}
-
-}
+} // namespace arete

@@ -4,23 +4,31 @@
 
 namespace arete {
 
-struct TickClock
+class TickClock
 {
+  struct Tick {
+    bool shouldTick;
+    float deltaTime;
+  };
+
 public:
-    TickClock(float Target) : target(Target) {}
+  using Clock = std::chrono::steady_clock;
 
-    void setStartPoint();
+public:
+  //! Constructs tick clock.
+  //! @param tickPeriod Tick period [T].
+  explicit TickClock(float tickPeriod);
 
-    bool tick(float & deltaTime);
-
-    float target = 0;
+  //! Performs tick.
+  //! @returns Tick information.
+  Tick tick() noexcept;
 
 private:
-    std::chrono::steady_clock timer;
-    std::chrono::steady_clock::time_point currentTime;
-    std::chrono::steady_clock::time_point lastTime;
+  Clock::time_point curentTickTime;
+  Clock::time_point lastTickTime;
 
-    float deltaSum = 0;
+  float tickTimeDelta = 0;
+  float tickPeriod = 0;
 };
 
 }
