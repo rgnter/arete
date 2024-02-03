@@ -729,6 +729,7 @@ void InFlightRendering::render()
   const auto& frameFence
     = *_inFlightFences[_inFlightFrameIndex];
 
+  // Wait for available frame
   const auto fenceWaitResult = device.waitForFences(
     frameFence, true, UINT64_MAX);
   assert(fenceWaitResult == vk::Result::eSuccess);
@@ -741,8 +742,13 @@ void InFlightRendering::render()
 
   const auto& swapchain = _renderer._swapChain;
   auto [result, imageIndex] = swapchain.acquireNextImage(
-    UINT64_MAX, imageAvailableSemaphore);
+    UINT32_MAX, imageAvailableSemaphore);
   _currentImageIndex = imageIndex;
+
+  if(result != vk::Result::eSuccess)
+  {
+    return;
+  }
 
   assert(result == vk::Result::eSuccess);
   assert(imageIndex < _renderer._swapChainImageViews.size());
@@ -785,6 +791,7 @@ void InFlightRendering::render()
     0,
     vk::ArrayProxy<const arete::PushConstants>({_engine._pushConstants})
   );
+
   commandBuffer.pushConstants(
     pipelineLayout,
     vk::ShaderStageFlagBits::eFragment,
@@ -872,8 +879,9 @@ void InFlightRendering::present()
     .pSwapchains = &(*swapchain),
     .pImageIndices = &_currentImageIndex};
 
-  const auto& presentQueue = _renderer._presentQueue;
-  assert(presentQueue.presentKHR(presentInfoKHR) == vk::Result::eSuccess);
+  const auto& presentQueue = _renderer._presentQueue;]
+  const auto result = presentQueue.presentKHR(presentInfoKHR);
+  assert(result == vk::Result::eSuccess);
 }
 
 } // namespace vulkan

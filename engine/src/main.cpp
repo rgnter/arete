@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     const auto size = std::filesystem::file_size(shaderBinaryPath);
     std::ifstream input(shaderBinaryPath, std::ios::binary);
     if (input.bad())
-      throw std::runtime_error(""
-        /*std::format("Couldn't find shader at '{}'", shaderBinaryPath.c_str())*/);
+      throw std::runtime_error(
+        std::format("Couldn't find shader at '{}'", shaderBinaryPath.c_str()));
 
     std::vector<uint8_t> buffer(size);
     input.read(reinterpret_cast<char*>(buffer.data()), size);

@@ -371,4 +371,4 @@ void VulkanEngine::run()
   }
 }
 
-}
+} // namespace vulkan
