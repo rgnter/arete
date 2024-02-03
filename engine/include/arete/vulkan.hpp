@@ -19,6 +19,21 @@
 namespace arete
 {
 
+namespace vulkan
+{
+
+struct SwapChain
+{
+  void setup();
+};
+
+struct Pipeline
+{
+
+};
+
+}
+
 namespace vkr = vk::raii;
 
 struct PushConstants

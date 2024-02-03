@@ -58,7 +58,7 @@ enum class InputKey {
 
 enum class InputDeviceType {
     UNKNOWN,
-    
+
 	KEYBOARD,
 	MOUSE,
 	GAMEPAD
@@ -204,7 +204,7 @@ public:
 
         void addToNewStateBuffer(InputKey key, InputDeviceState state);
         void pushAndCapture(DeviceStateMap & capture);
-        
+
     private:
         std::unordered_map<InputKey, CallbackBank> _onStateChanged;
 

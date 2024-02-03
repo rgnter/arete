@@ -13,107 +13,108 @@
 namespace arete::hcs
 {
 
-//! System component arena.
-template<class ComponentHandleType, class ComponentType>
-class ComponentArena
+//! Arena.
+template<class ObjectHandleType, class ObjectType>
+class Arena
 {
 public:
-  //! Contiguous array of components.
-  using ComponentArray = std::vector<ComponentType>;
-  //! Represents index of an component in the array of components.
-  using ComponentIndex = int64_t;
-  //! Represents index of all component handles to component indexes.
-  using ComponentIndexMap = std::unordered_map<ComponentHandleType, ComponentIndex>;
-  //! Represents array of freed components of which space can be re-used.
-  using ComponentFreelist = std::vector<ComponentIndex>;
-  //! Atomic counter of unique components created in this component arena.
-  using ComponentCounter = std::atomic<ComponentHandleType>;
+  //! Contiguous array of objects.
+  using ObjectArray = std::vector<ObjectType>;
+  //! Represents index of an object in the array of objects.
+  using ObjectIndex = int64_t;
+  //! Represents index of all object handles to object indexes.
+  using ObjectIndexMap = std::unordered_map<ObjectHandleType, ObjectIndex>;
+  //! Represents array of freed objects of which space can be re-used.
+  using ObjectIndexFreeList = std::vector<ObjectIndex>;
+  //! Atomic counter of unique objects created in this component arena.
+  using ObjectCounter = std::atomic<ObjectHandleType>;
 
   //! Default constructor.
-  ComponentArena() = default;
+  Arena() = default;
 
   //! Deleted copy constructor.
-  ComponentArena(const ComponentArena& rhs) = delete;
+  Arena(const Arena& rhs) = delete;
 
   //! Deleted move constructor.
-  ComponentArena(ComponentArena&& rhs) = delete;
+  Arena(Arena&& rhs) = delete;
 
-  //! Creates new component in the arena.
-  //! @returns Pair of component handle and component reference.
-  [[nodiscard]] std::pair<ComponentHandleType, ComponentType&> createComponent() {
-    const ComponentHandleType componentHandle = _componentCounter++;
+  template<typename... _Args>
+  //! Creates new object in the arena.
+  //! @returns Pair of object handle and object reference.
+  [[nodiscard]] std::pair<ObjectHandleType, ObjectType&> createObject(_Args&&... args) {
+    const ObjectHandleType componentHandle = _objectCounter++;
 
-    // Find an empty space for this component.
+    // Find an empty space for this object.
     // Try to get last element from the free list if available,
     // otherwise continue in contiguous allocations.
-    ComponentIndex index = -1;
-    if (!_componentFreelist.empty())
+    ObjectIndex index = -1;
+    if (!_objectFreelist.empty())
     {
-      index = _componentFreelist.back();
-      _componentFreelist.pop_back();
+      index = _objectFreelist.back();
+      _objectFreelist.pop_back();
+      _objects[index] = std::move(ObjectType{std::forward<_Args>(args)...});
     } else
     {
-      index = _components.size();
-      _components.emplace_back();
+      index = _objects.size();
+      _objects.emplace_back(std::forward<_Args>(args)...);
     }
 
-    auto& component = _components[index];
+    auto& object = _objects[index];
 
-    // Index the component handle to the index.
-    _componentIndex[componentHandle] = index;
 
-    return {componentHandle, component};
+    // Index the object handle to the index.
+    _objectIndex[componentHandle] = index;
+
+    return {componentHandle, object};
   }
 
-  //! Destroys component in the arena.
-  //! @param componentHandle ComponentType handle.
-  [[maybe_unused]] bool destroyComponent(const ComponentHandleType componentHandle)
+  //! Destroys object in the arena.
+  //! @param objectHandle Object handle.
+  [[maybe_unused]] bool destroyObject(const ObjectHandleType objectHandle)
   {
-    auto indexIterator = _componentIndex.find(componentHandle);
-    if (indexIterator == _componentIndex.end())
+    auto indexIterator = _objectIndex.find(objectHandle);
+    if (indexIterator == _objectIndex.end())
       return false;
 
-    // Get the index assigned to the component handle
-    // and use that to retrieve reference to component and default construct it.
-    ComponentIndex index = indexIterator->first;
-    _components[index] = {};
+    // Get the index assigned to the object handle.
+    ObjectIndex index = indexIterator->first;
 
-    // Erase the component index to component handle index entry
+    // Erase the object index to object handle index entry
     // and mark this component index as free.
-    _componentIndex.erase(indexIterator);
-    _componentFreelist.push_back(index);
+    _objectIndex.erase(indexIterator);
+    _objectFreelist.push_back(index);
 
-    return _componentIndex.erase(componentHandle);
+    return _objectIndex.erase(objectHandle);
   }
 
-  //! Gets component by its handle.
-  //! @returns Optional component reference.
-  [[nodiscard]] std::optional<Ref<ComponentType>> getComponent(const ComponentHandleType componentHandle)
+  //! Gets object by its handle.
+  //! @returns Optional object reference.
+  [[nodiscard]] std::optional<Ref<ObjectType>> getObject(const ObjectHandleType objectHandle)
   {
-    auto indexIterator = _componentIndex.find(componentHandle);
-    if (indexIterator == _componentIndex.end())
+    auto indexIterator = _objectIndex.find(objectHandle);
+    if (indexIterator == _objectIndex.end())
       return std::nullopt;
-    return _components[indexIterator->second];
+    return _objects[indexIterator->second];
   }
 
-  //! @returns Reference to indexed components.
-  [[nodiscard]] ComponentArray& components() noexcept
+  //! @returns Reference to contiguous array of objects.
+  [[nodiscard]] ObjectArray& objects() noexcept
   {
-    return _components;
+    return _objects;
   }
 
-  //! @returns Reference to immutable indexed components.
-  [[nodiscard]] const ComponentArray& components() const noexcept
+  //! @returns Reference to immutable contiguous array of objects.
+  [[nodiscard]] const ObjectArray& objects() const noexcept
   {
-    return _components;
+    return _objects;
   }
 
 private:
-  ComponentArray _components;
-  ComponentIndexMap _componentIndex;
-  ComponentFreelist _componentFreelist;
+  ObjectArray _objects;
+  ObjectIndexMap _objectIndex;
+  ObjectIndexFreeList _objectFreelist;
 
-  ComponentCounter _componentCounter{ 0 };
+  ObjectCounter _objectCounter{ 0 };
 };
 
 } // namespace arete::hcs

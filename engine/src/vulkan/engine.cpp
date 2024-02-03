@@ -154,7 +154,7 @@ void VulkanEngine::run()
 
   _display.setup(_renderer);
 
-  _glfwInput.setup(_display._window);
+  //_glfwInput.setup(_display._window);
 
   // auto & actionMap = _glfwInput.createActionMap();
 
@@ -241,7 +241,8 @@ void VulkanEngine::run()
 
   while(!glfwWindowShouldClose(_display._window))
   {
-    _glfwInput.processInput();
+    glfwPollEvents();
+    //_glfwInput.processInput();
 
     rotationY = 0;
     rotationX = 0;

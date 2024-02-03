@@ -7,12 +7,12 @@
 
 int main(int argc, char** argv)
 {
-  const auto readMeshBinary = [](const std::filesystem::path& meshBinaryPath)
+  const auto readMeshBinary = [](const std::filesystem::path& shaderBinaryPath)
   {
-    std::ifstream input(meshBinaryPath, std::ios::binary);
+    std::ifstream input(shaderBinaryPath, std::ios::binary);
     if (!input.is_open())
       throw std::runtime_error(""
-        /*std::format("Couldn't find mesh at '{}'", meshBinaryPath.c_str())*/);
+        /*std::format("Couldn't find mesh at '{}'", shaderBinaryPath.c_str())*/);
 
     std::vector<glm::f32vec3> vertices;
     std::vector<glm::u16vec3> indices;
@@ -64,10 +64,9 @@ int main(int argc, char** argv)
     vertexShader,
     fragmentShader);
 
-  //auto data = readMeshBinary("resources/cube.obj");
   auto mesh = engine.createMesh(
     material,
-    arete::Mesh::Vertices{
+    arete::Mesh::Vertices {
       // FRONT
        {-0.5f, -0.5f, +0.5f},
        {+0.5f, -0.5f, +0.5f},
@@ -136,71 +135,40 @@ int main(int argc, char** argv)
         {21, 22, 23}
     });
 
-  /*
-    //! Player input component.
-    //! Controls simple spatial transformations based on inputs.
-    class PlayerInputComponent
-        : arete::hcs::InputComponent
-    {
-    public:
-      void OnCreate(arete::Scene& scene) override
-      {
-        _spatial = GetActor().GetComponent<arete::hcs::SpatialComponent>();
-      }
 
-      void OnDestroy(arete::Scene& scene) override
-      {
-      }
-
-      void HandleInput(float value, arete::InputKey key) override
-      {
-        glm::vec3 axis;
-        if (key == arete::InputKey::Keyboard_Right)
-          axis = {1, 0, 0};
-        else if (key == arete::InputKey::Keyboard_Left)
-          axis = {-1, 0, 0};
-        else if (key == arete::InputKey::Keyboard_Upward)
-          axis = {0, 0, 1};
-        else if (key == arete::InputKey::Keyboard_Downward)
-          axis = {0, 0, -1};
-
-        _spatial.translate(axis * value);
-      }
-
-    private:
-      arete::Ref<arete::hcs::SpatialComponent> _spatial;
-
-    };
-
-    //! Player actor.
-    class Player
-        : arete::Actor
-    {
-    public:
-      void OnCreate(Scene& scene) override
-      {
-        // Create the mesh component.
-        _mesh = CreateComponent<arte::MeshComponent>(
-          arete::assets::find("primitives/cube.fbx"),
-          arete::assets::find("primitives/materials/cube.mat"));
-
-        // Create the spatial component.
-        _spatial = CreateComponent<arete::SpatialComponent>();
-
-        // Create the input component.
-        _input = CreateComponent<PlayerInputComponent>(_spatial);
-      }
-
-      void OnDestroy() override
-      {
-      }
-
-    private:
-      arete::Ref<arete::hcs::MeshComponent> _mesh;
-      arete::Ref<arete::hcs::SpatialComponent> _spatial;
-      arete::Ref<arete::hcs::InputComponent> _input;
-    };*/
-
-
-  engine.run();
+                    engine.run();
 }
+
+class Scene
+{
+private:
+  std::tuple<arete::MeshComponentSystem, arete::SpatialComponentSystem> _systems;
+};
+
+class MyActor
+    : public arete::Actor
+{
+private:
+  arete::Ref<arete::MeshComponent> _mesh;
+  arete::Ref<arete::SpatialComponent> _spatial;
+
+public:
+  void onCreate(arete::Scene& scene) override
+  {
+    _mesh = createComponent<arete::MeshComponent>(scene);
+    _spatial = createComponent<arete::SpatialComponent>(scene);
+  }
+
+  void onDestroy(arete::Scene& scene) override
+  {
+    destroyComponent<>(scene, _spatial);
+    destroyComponent<>(scene, _mesh);
+  }
+
+
+  template<class ComponentType>
+  arete::Ref<ComponentType> createComponent()
+  {
+
+  }
+};
