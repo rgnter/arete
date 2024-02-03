@@ -673,7 +673,7 @@ void VulkanRenderer::setup()
 
 
 InFlightRendering::InFlightRendering(const VulkanRenderer& renderer, const VulkanEngine& engine)
-    : _renderer(renderer), _engine(engine)
+    : _renderer(renderer), _engine(engine), _shouldRender(true)
 {
   const auto& device = _renderer._device;
   // Image available semaphores
@@ -715,6 +715,17 @@ InFlightRendering::InFlightRendering(const VulkanRenderer& renderer, const Vulka
     }
   };
 }
+
+InFlightRendering::~InFlightRendering()
+{
+  const auto& device = _renderer._device;
+  for (auto& fence: _inFlightFences)
+  {
+    const auto result = device.waitForFences(*fence, vk::True, UINT64_MAX);
+    assert(result == vk::Result::eSuccess);
+  }
+}
+
 
 void InFlightRendering::draw()
 {
@@ -815,13 +826,13 @@ void InFlightRendering::render()
   );
 
   // Bind VBOs
-  const auto& vertexBuffer = *_engine._mesh._vertexBuffer;
+  const auto& vertexBuffer = *_renderer._mesh._vertexBuffer;
   commandBuffer.bindVertexBuffers(
     0, {vertexBuffer}, {0}
   );
 
   // Bind IBO
-  const auto& indexBuffer = *_engine._mesh._indexBuffer;
+  const auto& indexBuffer = *_renderer._mesh._indexBuffer;
   commandBuffer.bindIndexBuffer(
     indexBuffer, 0, vk::IndexType::eUint16
   );

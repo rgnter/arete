@@ -311,13 +311,13 @@ void VulkanEngine::run()
   }
 
   // Context and In Flight Rendering
-  const auto& mesh = getMesh(_mesh._mesh);
-  _mesh.indexBuffer(
+  const auto& mesh = getMesh(_renderer._mesh._mesh);
+  _renderer._mesh.indexBuffer(
     _renderer._device,
     _renderer._physicalDevice,
     mesh
   );
-  _mesh.vertexBuffer(
+  _renderer._mesh.vertexBuffer(
     _renderer._device,
     _renderer._physicalDevice,
     mesh

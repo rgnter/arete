@@ -145,6 +145,8 @@ public:
   vkr::PhysicalDevice _physicalDevice { nullptr };
   vkr::Device _device { nullptr };
 
+  arete::VulkanMesh _mesh;
+
   vkr::Queue _graphicsQueue { nullptr };
   vkr::Queue _presentQueue { nullptr };
 
@@ -213,6 +215,8 @@ public:
   explicit InFlightRendering(
     const VulkanRenderer& renderer,
     const VulkanEngine& engine);
+
+  ~InFlightRendering();
   /**
    * Draws frame.
    */
@@ -230,6 +234,7 @@ private:
   void present();
 
 private:
+  bool _shouldRender;
   const VulkanRenderer& _renderer;
   const VulkanEngine& _engine;
 
@@ -271,14 +276,13 @@ public:
   {
     auto meshHandle = arete::Engine::createMesh(material, vertices, indices);
     const auto& mesh = getMesh(meshHandle);
-    _mesh._mesh = meshHandle;
+    _renderer._mesh._mesh = meshHandle;
     return meshHandle;
   }
 
   void run() override;
 
 public:
-  arete::VulkanMesh _mesh;
   arete::PushConstants _pushConstants;
   arete::ShaderMatrices _shaderMatrices;
   // arete::PushConstantsCore _pushConstantsCore;
