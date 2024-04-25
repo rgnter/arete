@@ -8,4 +8,7 @@ build/
 *.iml
 .json
 .editorconfig
+
+# VSCod(e/ium)
 .vscode/
+.cache/

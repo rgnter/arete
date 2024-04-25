@@ -1,4 +1,7 @@
 include(cmake/resources.cmake)
+
+option(ARETE_ENGINE_BUILD_TESTS "Enable engine test building" OFF)
+
 find_package(Vulkan REQUIRED)
 
 add_library(engine STATIC
@@ -23,7 +26,6 @@ target_link_libraries(engine
 target_include_directories(engine
         PUBLIC include/)
 
-add_executable(game
-        src/main.cpp)
-target_link_libraries(game
-        PRIVATE engine)
+if (ARETE_ENGINE_BUILD_TESTS) 
+    add_subdirectory(tests)
+endif()
