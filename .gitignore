@@ -12,3 +12,6 @@ build/
 # VSCod(e/ium)
 .vscode/
 .cache/
+
+#CTest
+Temporary/
