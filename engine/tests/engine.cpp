@@ -5,8 +5,7 @@
 
 int main(int argc, char** argv)
 {
-  const auto
-  readMeshBinary = [](const std::filesystem::path& meshBinaryPath)
+  const auto readMeshBinary = [](const std::filesystem::path& meshBinaryPath)
   {
     std::ifstream input(meshBinaryPath, std::ios::binary);
     if (!input.is_open())
@@ -54,10 +53,10 @@ int main(int argc, char** argv)
 
   auto vertexShader = engine.createShader(
     arete::Shader::Stage::Vertex,
-    readSpvBinary("../resources/shaders/cube-vertex.spv"));
+    readSpvBinary("resources/shaders/cube-vertex.spv"));
   auto fragmentShader = engine.createShader(
     arete::Shader::Stage::Fragment,
-    readSpvBinary("../resources/shaders/cube-fragment.spv"));
+    readSpvBinary("resources/shaders/cube-fragment.spv"));
 
   auto material = engine.createMaterial(
     vertexShader,

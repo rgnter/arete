@@ -2,6 +2,7 @@
 
 namespace vulkan
 {
+
 void Display::setup(VulkanRenderer& renderer)
 {
   if (!glfwInit())
