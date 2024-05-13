@@ -1,6 +1,7 @@
 function(target_compile_shaders Target ShaderFolder)
     set(BuildShaderFolder "${PROJECT_BINARY_DIR}/${ShaderFolder}")
-    file(GLOB_RECURSE GLSL_SOURCE_FILES
+    file(MAKE_DIRECTORY ${BuildShaderFolder})
+    file(GLOB GLSL_SOURCE_FILES
             "${ShaderFolder}/*.glsl"
     )
 

@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #include <arete/vulkan.hpp>
 #include <fstream>
 #include <filesystem>
